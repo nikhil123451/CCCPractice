@@ -1,7 +1,6 @@
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class ComputerPurchase {
 	static Scanner scn = new Scanner(System.in);
