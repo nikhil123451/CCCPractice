@@ -87,7 +87,7 @@ public class ComputerPurchase {
     			secondLargestMachineValueCode = largestMachineValueCode;
                 largestMachineValue = machineValue;
                 largestMachineValueCode = i;
-            } else if (machineValue > secondLargestMachineValue && machineValue != largestMachineValue) {
+            } else if (machineValue > secondLargestMachineValue) {
                 secondLargestMachineValue = machineValue;
     			secondLargestMachineValueCode = i;
             }
