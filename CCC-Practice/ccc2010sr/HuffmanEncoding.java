@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.stream.IntStream;
 import java.util.Scanner;
 
 public class HuffmanEncoding {
@@ -21,8 +22,32 @@ public class HuffmanEncoding {
 				characters[i] = character;
 				binaryData[i] = binaryValue;
 			}
-			System.out.println(Arrays.toString(characters));
-			System.out.println(Arrays.toString(binaryData));
+			
+			String encodedString = "";
+			String decodedString = "";
+			System.out.print("");
+			encodedString = scn.next();
+			String[] encodedBinaryData = encodedString.split("");
+			String bit = "";
+			for (int i = 0 ; i < encodedBinaryData.length ; i++) {
+				if (bit.length() <= 1) {
+					bit = encodedBinaryData[i];
+				}
+				if (Arrays.stream(binaryData).anyMatch(bit::equals)) {
+					int index = 0;
+					for (int j = 0; j < binaryData.length; j++) {
+					    if (bit.equals(binaryData[j])) {
+					        index = j;
+					        break;
+					    }
+					}
+					decodedString = decodedString + characters[index];
+					bit = "";
+				} else {
+					bit = bit + encodedBinaryData[i+1];
+				}
+			}
+			System.out.println(decodedString);
 		}
 	}
 }
