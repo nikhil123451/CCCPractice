@@ -3,24 +3,36 @@ import java.util.*;
 public class Firehose { //taken from GPT
 	
 	static Scanner scn = new Scanner(System.in);
+	static final int CIRCLE_CIRCUMFERENCE = 1_000_000;
 
     public static void main(String[] args) {
-        int[] housePositions = {0, 67000, 68000, 77000};
-        int k = 1;
-
-        int minHoseLength = findMinimumHoseLength(housePositions, k);
-        System.out.println("Minimum maximum hose length: " + minHoseLength);
+    	System.out.print("");
+    	int numberOfHouses = scn.nextInt();
+    	if (numberOfHouses >= 1 && numberOfHouses <= 1000) {
+    		int[] housePositions = new int[numberOfHouses];
+    		for (int i = 0 ; i < numberOfHouses ; i++) {
+    			System.out.print("");
+    			housePositions[i] = scn.nextInt();;
+    		}
+    		
+    		System.out.print("");
+            int fireHydrants = scn.nextInt();
+            if (fireHydrants >= 1 && fireHydrants <= 1000) {
+        	}
+            int minHoseLength = findMinimumHoseLength(housePositions, fireHydrants);
+            System.out.println(minHoseLength);
+    	}
     }
     
-    public static int findMinimumHoseLength(int[] houses, int k) {
-        Arrays.sort(houses);
+    public static int findMinimumHoseLength(int[] housePositions, int fireHydrants) {
+        Arrays.sort(housePositions);
 
         int low = 0;
-        int high = 1_000_000 / 2;
+        int high = CIRCLE_CIRCUMFERENCE / 2;
 
-        while (low < high) {
+        while (low < high) { //binary search
             int mid = (low + high) / 2;
-            if (canCoverAll(houses, k, mid)) {
+            if (canCoverAll(housePositions, fireHydrants, mid)) {
                 high = mid;
             } else {
                 low = mid + 1;
@@ -30,29 +42,28 @@ public class Firehose { //taken from GPT
         return low;
     }
     
-    public static boolean canCoverAll(int[] houses, int k, int L) {
-        int n = houses.length;
-        int[] extended = new int[2 * n];
+    public static boolean canCoverAll(int[] housePositions, int fireHydrants, int mid) {
+        int[] extendedArray = new int[2 * housePositions.length];
         
-        for (int i = 0; i < n; i++) {
-            extended[i] = houses[i];
-            extended[i + n] = houses[i] + 1_000_000;
+        for (int i = 0; i < housePositions.length; i++) { //fill array with house positions + house positions with full rotation
+            extendedArray[i] = housePositions[i];
+            extendedArray[i + housePositions.length] = housePositions[i] + CIRCLE_CIRCUMFERENCE;
         }
         
-        for (int start = 0; start < n; start++) {
+        for (int start = 0; start < housePositions.length; start++) {
             int hydrantsUsed = 0;
             int i = start;
 
-            while (i < start + n) {
-                int coverUntil = extended[i] + 2 * L;
+            while (i < start + housePositions.length) { //looping through all regular house positions
+                int coverUntil = extendedArray[i] + 2 * mid; //max length hydrant can cover
                 hydrantsUsed++;
 
-                while (i < start + n && extended[i] <= coverUntil) {
+                while (i < start + housePositions.length && extendedArray[i] <= coverUntil) { //looping again + checking if the house position is <= max cover dist 
                     i++;
                 }
             }
 
-            if (hydrantsUsed <= k) {
+            if (hydrantsUsed <= fireHydrants) { //if the hydrants used can actually cover everything
             	return true;
             }
         }
