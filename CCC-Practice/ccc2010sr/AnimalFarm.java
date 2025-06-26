@@ -61,25 +61,30 @@ public class AnimalFarm {//taken from GPT and modified
         System.out.println(Math.min(costWithOutside, costWithoutOutside)); //taking both calculated costs, finding the smaller one, and then printing it out
     }
 
-    static int find(int[] parent, int x) {
-        if (parent[x] != x) parent[x] = find(parent, parent[x]);
-        return parent[x];
+    static int find(int[] parent, int x) { //returns whatever root x belongs to (kruskal's algorithm)
+        if (parent[x] != x) { //if index X is not equal to X
+        	parent[x] = find(parent, parent[x]); //replace index X with another find with parent[x] being passed as a parameter recursively instead to ensure the value gets assigned properly
+        }
+        return parent[x]; //returns the value at index X
     }
 
-    static int kruskal(List<int[]> edges, int nodeCount) {
-        int[] parent = new int[nodeCount];
-        for (int i = 0; i < nodeCount; i++) parent[i] = i;
+    static int kruskal(List<int[]> edges, int nodeCount) { //implementation of kruskal's algorithm (min span tree (MST))
+        int[] parent = new int[nodeCount]; //array of length nodeCount, tracks which nodes belong to which sets
+        for (int i = 0; i < nodeCount; i++) { //looping through each node
+        	parent[i] = i; //setting each element in the row to i (0,1,2,3,4....)
+        }
 
-        int cost = 0;
-        for (int[] e : edges) {
-            int a = e[0], b = e[1], w = e[2];
-            int ra = find(parent, a), rb = find(parent, b);
-            if (ra != rb) {
-                parent[rb] = ra;
-                cost += w;
+        int cost = 0; //initializing cost to 0 for calculation purposes
+        for (int[] edge : edges) {
+            int startingNode = edge[0], endingNode = edge[1], costOfEdge = edge[2];
+            int rootsOfStartingNode = find(parent, startingNode); //finds the roots of the startingNode
+            int rootsOfEndingNode = find(parent, endingNode); //finds the roots of the endingNode
+            if (rootsOfStartingNode != rootsOfEndingNode) { //checks if they aren't connected edges, makes sure there are no cycles
+                parent[rootsOfEndingNode] = rootsOfStartingNode; //merge the 2 sets
+                cost += costOfEdge; //add the cost of the edge to the total
             }
         }
 
-        return cost;
+        return cost; //returns the total cost calculated
     }
 }
