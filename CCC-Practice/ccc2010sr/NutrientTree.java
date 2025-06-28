@@ -1,35 +1,35 @@
 import java.util.*;
 
 public class NutrientTree { //taken from GPT
-    static final int MAX_NODES = 1000;
+    static final int MAX_NODES = 1000; //maxiumum amount of nodes for a tree
 
-    static String input;
-    static int index = 0;
+    static Scanner scn = new Scanner(System.in); //creating the scanner
+    static String input; //declaring an input variable
+    static int index = 0; //index to keep track of nodes
 
-    static boolean[] isLeaf = new boolean[MAX_NODES];
-    static int[] nutrient = new int[MAX_NODES];
-    static int[][] children = new int[MAX_NODES][2]; // IMPORTANT: fixed second dimension size 2
-    static int[][] dpCache; // initialized after parsing
-    static int nodeId = 0;
-    static int X;
+    static boolean[] isLeaf = new boolean[MAX_NODES]; //array that keeps track of which nodes are leaves
+    static int[] nutrients = new int[MAX_NODES]; //array that keeps track of how many nutrients are at each node
+    static int[][] children = new int[MAX_NODES][2]; //keeps track of a node's 2 children (0 being left, and 1 being right)
+    static int[][] dynamicProgramCache; //cache to store results so that computation isn't repeated if it doesn't need to be
+    static int nodeId = 0; //static variable that allows each node to have a unique id
+    static int numberOfGrowthAgents; //static variable that keeps track of the amount of growth agents inputed
 
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        input = sc.nextLine();
-        X = Integer.parseInt(sc.nextLine());
+    public static void main(String[] args) { //main method
+        input = scn.nextLine(); //takes the first line in the console and sets that to be the input
+        numberOfGrowthAgents = Integer.parseInt(scn.nextLine()); //takes the second line and parses it as an int for the number of growth agents
 
-        index = 0;
-        nodeId = 0;
+        index = 0; //initial index of 0
+        nodeId = 0; //first node will have a value of 0
         
-        int root = parseNode();
+        int root = parseNode(); //parses the input into a nodeID and sets that as the root
 
-        dpCache = new int[nodeId][X + 1];
-        for (int i = 0; i < nodeId; i++) {
-            Arrays.fill(dpCache[i], -1);
+        dynamicProgramCache = new int[nodeId][numberOfGrowthAgents + 1]; //initializes the dynamic programming cache that is the amount of nodes by the amount of growing agents (including 0)
+        for (int i = 0; i < nodeId; i++) { //loops through every node
+            Arrays.fill(dynamicProgramCache[i], -1); //sets every value in the 2d array to -1 to indicated that they haven't been computed yet
         }
-        int result = dp(root, X);
+        int maximumAmountOfNutrients = dynamicProgram(root, numberOfGrowthAgents); //using dynamic programming to calculate the max amount of nutrients given the root and the amount of growth agents used
 
-        System.out.println(result);
+        System.out.println(maximumAmountOfNutrients); //printing out the calculated result
     }
 
     static void skipSpaces() {
@@ -78,7 +78,7 @@ public class NutrientTree { //taken from GPT
     static int storeLeafNode(int val) {
         int id = nodeId++;
         isLeaf[id] = true;
-        nutrient[id] = val;
+        nutrients[id] = val;
         return id;
     }
 
@@ -90,13 +90,13 @@ public class NutrientTree { //taken from GPT
         return id;
     }
 
-    static int dp(int node, int x) {
-        if (dpCache[node][x] != -1) return dpCache[node][x];
+    static int dynamicProgram(int node, int x) {
+        if (dynamicProgramCache[node][x] != -1) return dynamicProgramCache[node][x];
 
         int result;
 
         if (isLeaf[node]) {
-            result = nutrient[node] + x;
+            result = nutrients[node] + x;
         } else {
             int left = children[node][0];
             int right = children[node][1];
@@ -105,8 +105,8 @@ public class NutrientTree { //taken from GPT
             int[] rightDP = new int[x + 1];
 
             for (int i = 0; i <= x; i++) {
-                leftDP[i] = dp(left, i);
-                rightDP[i] = dp(right, i);
+                leftDP[i] = dynamicProgram(left, i);
+                rightDP[i] = dynamicProgram(right, i);
             }
 
             result = 0;
@@ -124,7 +124,7 @@ public class NutrientTree { //taken from GPT
             }
         }
 
-        dpCache[node][x] = result;
+        dynamicProgramCache[node][x] = result;
         return result;
     }
 
