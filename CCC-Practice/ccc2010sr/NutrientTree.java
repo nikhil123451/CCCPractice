@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class NutrientTree { //taken from GPT
+public class NutrientTree { //taken from GPT and modified
     static final int MAX_NODES = 1000; //maxiumum amount of nodes for a tree
 
     static Scanner scn = new Scanner(System.in); //creating the scanner
@@ -32,46 +32,46 @@ public class NutrientTree { //taken from GPT
         System.out.println(maximumAmountOfNutrients); //printing out the calculated result
     }
 
-    static void skipSpaces() {
-        while (index < input.length() && Character.isWhitespace(input.charAt(index))) {
-            index++;
+    static void skipSpaces() { //skips space characters when parsing a node
+        while (index < input.length() && Character.isWhitespace(input.charAt(index))) { //loops through the input string, and checks if each character is a proper character eg. (, 5, 3
+            index++; //increments the index for every proper character
         }
     }
 
-    static int parseNode() {
-        skipSpaces();
+    static int parseNode() { //properly taking in an input as a node
+        skipSpaces(); //skip all the whitespace in the input
 
-        if (index >= input.length()) {
-            throw new IllegalArgumentException("Unexpected end of input at position " + index);
+        if (index >= input.length()) { //if the index is greater than the input length for whatever reason
+            throw new IllegalArgumentException("Unexpected end of input at position " + index); //throw an illegal argument exception
         }
 
-        char c = input.charAt(index);
+        char character = input.charAt(index); //storing the character in a variable of type char
 
-        if (c == '(') {
-            index++; // skip '('
-            skipSpaces();
+        if (character == '(') { //it it's a left bracket
+            index++; //skip the bracket
+            skipSpaces(); //skip whitespace
 
-            int left = parseNode();
-            skipSpaces();
+            int left = parseNode(); //parsing the left child as a node
+            skipSpaces(); //skipping whitespace
 
-            int right = parseNode();
-            skipSpaces();
+            int right = parseNode(); //parsing the right child as a node
+            skipSpaces(); //skip the whitespace
 
-            if (index >= input.length() || input.charAt(index) != ')') {
+            if (index >= input.length() || input.charAt(index) != ')') { //if the index is greater than the length for whatever reason, or if the character is not a right bracket
                 throw new IllegalArgumentException("Expected ')' at position " + index + ", but found '" +
-                        (index < input.length() ? input.charAt(index) : "EOF") + "'");
+                        (index < input.length() ? input.charAt(index) : "EOF") + "'"); //throw an illegal argument exception
             }
-            index++; // skip ')'
-            return storeInternalNode(left, right);
+            index++; //skip the right bracket
+            return storeInternalNode(left, right); //stores the node that connects the children and returns its id
 
-        } else if (Character.isDigit(c)) {
-            int num = 0;
-            while (index < input.length() && Character.isDigit(input.charAt(index))) {
-                num = num * 10 + (input.charAt(index++) - '0');
+        } else if (Character.isDigit(character)) { //if the character is a number
+            int number = 0; //initializing the number variable to 0
+            while (index < input.length() && Character.isDigit(input.charAt(index))) { //looping through the input string. and continually checking if the character at the index is a number
+                number = number * 10 + (input.charAt(index++) - '0'); //parsing numbers that might be greater than 1 digit long
             }
-            return storeLeafNode(num);
-        } else {
-            throw new IllegalArgumentException("Unexpected character at position " + index + ": '" + c + "'");
+            return storeLeafNode(number); //stores the leaf node with the specific nutrient value and returns its id
+        } else { //if the character isn't recognized as a number or bracket
+            throw new IllegalArgumentException("Unexpected character at position " + index + ": '" + character + "'"); //throw an illegal argument exception
         }
     }
 
