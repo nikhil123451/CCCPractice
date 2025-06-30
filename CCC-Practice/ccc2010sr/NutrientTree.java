@@ -51,10 +51,10 @@ public class NutrientTree { //taken from GPT and modified
             index++; //skip the bracket
             skipSpaces(); //skip whitespace
 
-            int left = parseNode(); //parsing the left child as a node
+            int leftChildId = parseNode(); //parsing the left child as a node
             skipSpaces(); //skipping whitespace
 
-            int right = parseNode(); //parsing the right child as a node
+            int rightChildId = parseNode(); //parsing the right child as a node
             skipSpaces(); //skip the whitespace
 
             if (index >= input.length() || input.charAt(index) != ')') { //if the index is greater than the length for whatever reason, or if the character is not a right bracket
@@ -62,32 +62,32 @@ public class NutrientTree { //taken from GPT and modified
                         (index < input.length() ? input.charAt(index) : "EOF") + "'"); //throw an illegal argument exception
             }
             index++; //skip the right bracket
-            return storeInternalNode(left, right); //stores the node that connects the children and returns its id
+            return storeParentNode(leftChildId, rightChildId); //stores the node that connects the children and returns its id
 
         } else if (Character.isDigit(character)) { //if the character is a number
-            int number = 0; //initializing the number variable to 0
+            int nutrientAmount = 0; //initializing the number of nutrients to 0
             while (index < input.length() && Character.isDigit(input.charAt(index))) { //looping through the input string. and continually checking if the character at the index is a number
-                number = number * 10 + (input.charAt(index++) - '0'); //parsing numbers that might be greater than 1 digit long
+                nutrientAmount = nutrientAmount * 10 + (input.charAt(index++) - '0'); //parsing numbers that might be greater than 1 digit long
             }
-            return storeLeafNode(number); //stores the leaf node with the specific nutrient value and returns its id
+            return storeLeafNode(nutrientAmount); //stores the leaf node with the specific nutrient value and returns its id
         } else { //if the character isn't recognized as a number or bracket
             throw new IllegalArgumentException("Unexpected character at position " + index + ": '" + character + "'"); //throw an illegal argument exception
         }
     }
 
-    static int storeLeafNode(int val) {
-        int id = nodeId++;
-        isLeaf[id] = true;
-        nutrients[id] = val;
-        return id;
+    static int storeLeafNode(int nutrientAmount) { //storing a leaf node with a nutrient value
+        int newNodeId = nodeId++; //setting the id to the next available one
+        isLeaf[newNodeId] = true; //making sure the program knows the node is a leaf
+        nutrients[newNodeId] = nutrientAmount; //adding nutrientAmount to the nutrient list
+        return newNodeId; //returning the id of the leaf node
     }
 
-    static int storeInternalNode(int left, int right) {
-        int id = nodeId++;
-        isLeaf[id] = false;
-        children[id][0] = left;
-        children[id][1] = right;
-        return id;
+    static int storeParentNode(int leftChildId, int rightChildId) { //storing a parent node
+        int newNodeId = nodeId++; //setting the id to the next available one
+        isLeaf[newNodeId] = false; //making sure the program knows the node is not a leaf
+        children[newNodeId][0] = leftChildId; //setting the left child of the node
+        children[newNodeId][1] = rightChildId; //setting the right child of the node
+        return newNodeId; //returning the id of the parent node
     }
 
     static int dynamicProgram(int node, int x) {
