@@ -90,42 +90,46 @@ public class NutrientTree { //taken from GPT and modified
         return newNodeId; //returning the id of the parent node
     }
 
-    static int dynamicProgram(int node, int x) {
-        if (dynamicProgramCache[node][x] != -1) return dynamicProgramCache[node][x];
+    static int dynamicProgram(int localNodeId, int amountOfGrowthAgents) { //using dynamic programming to calculate the maximum amount of nutrients that can flow into the root of the tree
+        if (dynamicProgramCache[localNodeId][amountOfGrowthAgents] != -1) { //if the node with specific growth has already been calculated
+        	return dynamicProgramCache[localNodeId][amountOfGrowthAgents]; //return that value (which is the maximum)
+        }
 
-        int result;
+        int maximumAmountOfNutrients; //declaring the maximum amount of nutrients as a variable
 
-        if (isLeaf[node]) {
-            result = nutrients[node] + x;
-        } else {
-            int left = children[node][0];
-            int right = children[node][1];
+        if (isLeaf[localNodeId]) { //if the node is a leaf node
+            maximumAmountOfNutrients = nutrients[localNodeId] + amountOfGrowthAgents; //setting the max nutrients to the amount of nutrients in the leaf + the amount of growth agents
+        } else { //if the node is a parental node
+            int leftChild = children[localNodeId][0]; //getting the left child of the parent node
+            int rightChild = children[localNodeId][1]; //getting the right child of the parent node
 
-            int[] leftDP = new int[x + 1];
-            int[] rightDP = new int[x + 1];
+            int[] leftCache = new int[amountOfGrowthAgents + 1]; //creating an int array to store all the calculations for the left child (+1 cuz java is 0 indexed)
+            int[] rightCache = new int[amountOfGrowthAgents + 1]; //creating an int array to store all the calculations for the right child (+1 cuz java is 0 indexed)
 
-            for (int i = 0; i <= x; i++) {
-                leftDP[i] = dynamicProgram(left, i);
-                rightDP[i] = dynamicProgram(right, i);
+            for (int i = 0; i <= amountOfGrowthAgents; i++) { //looping through the growth agents (+1 since java is 0 indexed)
+                leftCache[i] = dynamicProgram(leftChild, i); //running the dynamic program down through the tree for the left child and storing the result
+                rightCache[i] = dynamicProgram(rightChild, i); //running the dynamic program down through the tree for the right child and storing the result
             }
 
-            result = 0;
-            for (int total = 0; total <= x; total++) {
-                for (int edgeGrowth = 0; edgeGrowth <= total; edgeGrowth++) {
-                    int cap = (1 + edgeGrowth) * (1 + edgeGrowth);
-                    int remaining = total - edgeGrowth;
+            maximumAmountOfNutrients = 0; //setting max nutrients to 0 to make sure the variable is initialized 
+            
+            for (int total = 0; total <= amountOfGrowthAgents; total++) { //looping through every growth agent (+1 since java is 0 indexed)
+                for (int agents = 0; agents <= total; agents++) { //looping through the edges (+1 since java is 0 indexed)
+                    int edgeCapacity = (1 + agents) * (1 + agents); //from the problem, after giving *agents* agents, you can transport (1+agents)^2 nutrients
+                    int remainingAgents = total - agents; //finding the agents remaining after using a specific amount
 
-                    for (int l = 0; l <= remaining; l++) {
-                        int r = remaining - l;
-                        int sum = leftDP[l] + rightDP[r];
-                        result = Math.max(result, Math.min(sum, cap));
+                    for (int agentsForLeftChild = 0; agentsForLeftChild <= remainingAgents; agentsForLeftChild++) { //looping through the remaining agents (+1 since java is 0 indexed)
+                        int agentsForRightChild = remainingAgents - agentsForLeftChild; //finding the agents for the right child by taking the difference of the total left (remainingAgents) and the ones used for the left child
+                        int totalNutrients = leftCache[agentsForLeftChild] + rightCache[agentsForRightChild]; //calculating the total amount of nutrients from the right and left children
+                        int minimumNutrientFlow = Math.min(totalNutrients, edgeCapacity); //finding which is the minimum amount of nutrients the edge can handle
+                        maximumAmountOfNutrients = Math.max(maximumAmountOfNutrients, minimumNutrientFlow); //if the calculated minimumNutrientFlow is bigger than the max nutrients, set it to the maximum amount 
                     }
                 }
             }
         }
 
-        dynamicProgramCache[node][x] = result;
-        return result;
+        dynamicProgramCache[localNodeId][amountOfGrowthAgents] = maximumAmountOfNutrients; //store the result in the cache so there are no repeat calculations
+        return maximumAmountOfNutrients; //return the calculated max amount of nutrients
     }
 
 }
