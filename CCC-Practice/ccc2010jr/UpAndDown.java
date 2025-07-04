@@ -4,6 +4,7 @@ public class UpAndDown {
 	static Scanner scn = new Scanner(System.in);
 	
 	public static void main(String args[]) {
+		
 		System.out.print("");
 		int nikkyStepsForward = scn.nextInt();
 		System.out.print("");
@@ -14,6 +15,7 @@ public class UpAndDown {
 		int byronStepsBackward = scn.nextInt();
 		System.out.print("");
 		int totalSteps = scn.nextInt();
+		
 		if (totalSteps >= 1 && totalSteps <= 10000) {
 			if ((nikkyStepsForward >= 1 && nikkyStepsForward <= 100) && 
 				(nikkyStepsBackward >= 1 && nikkyStepsBackward <= 100) &&
