@@ -1,9 +1,11 @@
-import java.util.Scanner;
+import java.util.*;
 
 public class BoringBusiness {
 	static Scanner scn = new Scanner(System.in);
 	static boolean[][] map = new boolean[401][401]; //200 on both sides +1 cuz java is 0-indexed
 	static int[] currentCoordinate = {0, -1};
+	static ArrayList<String> queuedDirections = new ArrayList<String>();
+	static ArrayList<Integer> queuedMoveAmounts = new ArrayList<Integer>();
 	
 	public static void main(String args[]) {
 		for (int i = 0 ; i < map.length ; i++) {
@@ -23,6 +25,30 @@ public class BoringBusiness {
 		move("d", 4);
 		move("l", 8);
 		move("u", 2);
+		
+		while (true) {
+			System.out.print("");
+			String direction = scn.next();
+			int moveAmount = scn.nextInt();
+			
+			if (direction.contains("q")) {
+				break;
+			}
+			
+			queuedDirections.add(direction);
+			queuedMoveAmounts.add(moveAmount);
+		}
+		
+		for (int i = 0 ; i < queuedDirections.size(); i++) {
+			if (move(queuedDirections.get(i), queuedMoveAmounts.get(i))) {
+				System.out.println(Integer.toString(currentCoordinate[0]) + " " +
+				Integer.toString(currentCoordinate[1]) + " " + "safe");
+			} else {
+				System.out.println(Integer.toString(currentCoordinate[0]) + " " +
+						Integer.toString(currentCoordinate[1]) + " " + "DANGER");
+				break;
+			}
+		}
 	}
 	
 	public static void mapCoordinate(int xCoordinate, int yCoordinate) {
@@ -53,7 +79,6 @@ public class BoringBusiness {
 				
 				if (checkCoordinate(currentCoordinate[0], currentCoordinate[1])) {
 					hit = true;
-					break;
 				} else {
 					mapCoordinate(currentCoordinate[0], currentCoordinate[1]);
 				}
