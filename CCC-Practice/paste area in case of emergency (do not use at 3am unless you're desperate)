@@ -1,56 +1,47 @@
 import java.util.*;
 
-public class KnightHop {
+public class Unfriend {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        Scanner sc = new Scanner(System.in);
+        int N = sc.nextInt();
 
-        // Read the starting and ending coordinates
-        int startX = scanner.nextInt();
-        int startY = scanner.nextInt();
-        int endX = scanner.nextInt();
-        int endY = scanner.nextInt();
+        List<Integer>[] tree = new ArrayList[N + 1];
+        for (int i = 1; i <= N; i++) tree[i] = new ArrayList<>();
 
-        // Call method to calculate and print the minimum moves
-        System.out.println(getMinimumMoves(startX, startY, endX, endY));
-
-        scanner.close();
-    }
-
-    public static int getMinimumMoves(int startX, int startY, int endX, int endY) {
-        // If the knight is already at the destination
-        if (startX == endX && startY == endY) {
-            return 0;
+        for (int i = 1; i < N; i++) {
+            int inviter = sc.nextInt();
+            tree[inviter].add(i);
         }
 
-        // Define knight moves
-        int[] dx = {2, 1, -1, -2, -2, -1, 1, 2};
-        int[] dy = {1, 2, 2, 1, -1, -2, -2, -1};
+        int count = 0;
 
-        boolean[][] visited = new boolean[9][9]; // 1-based indexing for 8x8 board
-        Queue<int[]> queue = new LinkedList<>();
-        queue.add(new int[]{startX, startY, 0}); // x, y, move count
-        visited[startX][startY] = true;
-
-        while (!queue.isEmpty()) {
-            int[] current = queue.poll();
-            int x = current[0], y = current[1], moves = current[2];
-
-            for (int i = 0; i < 8; i++) {
-                int newX = x + dx[i];
-                int newY = y + dy[i];
-
-                if (newX == endX && newY == endY) {
-                    return moves + 1;
-                }
-
-                if (newX >= 1 && newX <= 8 && newY >= 1 && newY <= 8 && !visited[newX][newY]) {
-                    visited[newX][newY] = true;
-                    queue.add(new int[]{newX, newY, moves + 1});
-                }
+        for (int mask = 0; mask < (1 << (N - 1)); mask++) {
+            Set<Integer> removed = new HashSet<>();
+            for (int i = 1; i < N; i++) {
+                if ((mask & (1 << (i - 1))) != 0) removed.add(i);
             }
+
+            boolean valid = true;
+            for (int person : removed) {
+                Stack<Integer> stack = new Stack<>();
+                stack.push(person);
+                while (!stack.isEmpty()) {
+                    int current = stack.pop();
+                    for (int child : tree[current]) {
+                        if (!removed.contains(child)) {
+                            valid = false;
+                            break;
+                        }
+                        stack.push(child);
+                    }
+                    if (!valid) break;
+                }
+                if (!valid) break;
+            }
+
+            if (valid) count++;
         }
 
-        // Should never reach here on a valid 8x8 board
-        return -1;
+        System.out.println(count);
     }
 }
