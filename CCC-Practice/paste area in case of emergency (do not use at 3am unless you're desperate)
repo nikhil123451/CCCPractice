@@ -1,75 +1,43 @@
 import java.util.*;
 
-public class AliceThroughTheLookingGlass {
-    // 5x5 base pattern
-    static final boolean[][] BASE = new boolean[5][5];
-
-    static {
-        BASE[4 - 0][1] = true; // (1,0)
-        BASE[4 - 0][2] = true; // (2,0)
-        BASE[4 - 0][3] = true; // (3,0)
-        BASE[4 - 1][2] = true; // (2,1)
-    }
+public class BloodDistribution {
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int T = sc.nextInt();
-        List<String> results = new ArrayList<>();
 
-        for (int t = 0; t < T; t++) {
-            int m = sc.nextInt();
-            int x = sc.nextInt();
-            int y = sc.nextInt();
-            results.add(isCrystal(x, y, m) ? "crystal" : "empty");
+        int[] bloodUnits = new int[8];
+        int[] patients = new int[8];
+
+        for (int i = 0; i < 8; i++) {
+            bloodUnits[i] = sc.nextInt();
+        }
+        for (int i = 0; i < 8; i++) {
+            patients[i] = sc.nextInt();
         }
 
-        results.forEach(System.out::println);
-    }
+        int[][] compatible = {
+            {0},                         // O−
+            {1, 0},                      // O+
+            {2, 0},                      // A−
+            {3, 2, 1, 0},                // A+
+            {4, 0},                      // B−
+            {5, 4, 1, 0},                // B+
+            {6, 2, 4, 0},                // AB−
+            {7, 6, 3, 2, 5, 4, 1, 0}     // AB+
+        };
 
-    static boolean isCrystal(int x, int y, int level) {
-        return check(x, y, level);
-    }
+        int totalMatched = 0;
 
-    static boolean check(int x, int y, int level) {
-        if (level == 1) {
-            // Check if in initial base pattern at (0, 0)
-            if (x >= 0 && x < 5 && y >= 0 && y < 5) {
-                return inBase(x, y);
-            }
-            return false;
-        }
-
-        int size = pow5(level - 1);
-
-        for (int dx = 0; dx < 5; dx++) {
-            for (int dy = 0; dy < 5; dy++) {
-                int baseX = x - dx * size;
-                int baseY = y - dy * size;
-
-                if (inBase(dx, dy)) {
-                    int belowX = baseX;
-                    int belowY = baseY - size;
-
-                    if (check(belowX, belowY, level - 1)) {
-                        if (!check(belowX, belowY + size, level - 1)) {
-                            return true;
-                        }
-                    }
-                }
+        for (int i = 0; i < 8; i++) {
+            for (int donor : compatible[i]) {
+                int unitsToGive = Math.min(patients[i], bloodUnits[donor]);
+                patients[i] -= unitsToGive;
+                bloodUnits[donor] -= unitsToGive;
+                totalMatched += unitsToGive;
+                if (patients[i] == 0) break;
             }
         }
 
-        return false;
-    }
-
-    static boolean inBase(int x, int y) {
-        if (x < 0 || x >= 5 || y < 0 || y >= 5) return false;
-        return BASE[4 - y][x];
-    }
-
-    static int pow5(int exp) {
-        int result = 1;
-        for (int i = 0; i < exp; i++) result *= 5;
-        return result;
+        System.out.println(totalMatched);
     }
 }
