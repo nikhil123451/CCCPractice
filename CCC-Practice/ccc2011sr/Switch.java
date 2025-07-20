@@ -1,0 +1,85 @@
+import java.util.*;
+
+public class Switch { //taken from GPT and modified
+
+   static  Scanner scn = new Scanner(System.in);
+	
+    public static void main(String[] args) {
+        int K = scn.nextInt();
+        StringBuilder initialBuilder = new StringBuilder();
+        for (int i = 0; i < K; i++) {
+            initialBuilder.append(scn.nextInt());
+        }
+        String initial = initialBuilder.toString();
+
+        System.out.println(minTurnsToAllOff(initial));
+        scn.close();
+    }
+
+    // Applies the rule: turn off any block of 4+ consecutive 1s
+    public static String applyRule(String state) {
+        StringBuilder sb = new StringBuilder(state);
+        boolean changed;
+
+        do {
+            changed = false;
+            int i = 0;
+            while (i < sb.length()) {
+                if (sb.charAt(i) == '1') {
+                    int j = i;
+                    while (j < sb.length() && sb.charAt(j) == '1') {
+                        j++;
+                    }
+                    if (j - i >= 4) {
+                        for (int k = i; k < j; k++) {
+                            sb.setCharAt(k, '0');
+                        }
+                        changed = true;
+                        break; // restart the scan
+                    }
+                    i = j;
+                } else {
+                    i++;
+                }
+            }
+        } while (changed);
+
+        return sb.toString();
+    }
+
+    // BFS using queue: each element is a pair (configuration, steps)
+    public static int minTurnsToAllOff(String initial) {
+        Queue<String> queue = new LinkedList<>();
+        Queue<Integer> stepsQueue = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+
+        queue.add(initial);
+        stepsQueue.add(0);
+        visited.add(initial);
+
+        while (!queue.isEmpty()) {
+            String config = queue.poll();
+            int steps = stepsQueue.poll();
+
+            if (config.chars().allMatch(c -> c == '0')) {
+                return steps;
+            }
+
+            for (int i = 0; i < config.length(); i++) {
+                if (config.charAt(i) == '0') {
+                    StringBuilder next = new StringBuilder(config);
+                    next.setCharAt(i, '1');
+                    String newConfig = applyRule(next.toString());
+
+                    if (!visited.contains(newConfig)) {
+                        visited.add(newConfig);
+                        queue.add(newConfig);
+                        stepsQueue.add(steps + 1);
+                    }
+                }
+            }
+        }
+
+        return -1; // unreachable under valid input constraints
+    }
+}
