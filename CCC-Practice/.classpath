@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="ccc2010jr"/>
 	<classpathentry kind="src" path="ccc2011jr"/>
 	<classpathentry kind="src" path="ccc2011sr"/>
+	<classpathentry kind="src" path="ccc2012jr"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-23">
 		<attributes>
 			<attribute name="module" value="true"/>
