@@ -1,0 +1,34 @@
+import java.util.Scanner;
+
+public class IconScaling { //taken from GPT and modified
+	
+    static Scanner scn = new Scanner(System.in);
+	
+    public static void main(String[] args) {
+        int k = scn.nextInt();  // Read scaling factor
+        scn.close();
+
+        // Original 3x3 icon pattern
+        String[] icon = {
+            "*x*",
+            "xx ",
+            "* *"
+        };
+
+        // Loop through each row in the icon
+        for (String row : icon) {
+            // Build the scaled row
+            StringBuilder scaledRow = new StringBuilder();
+            for (char c : row.toCharArray()) {
+                for (int i = 0; i < k; i++) {
+                    scaledRow.append(c);  // Repeat each character k times
+                }
+            }
+
+            // Print the scaled row k times for vertical scaling
+            for (int i = 0; i < k; i++) {
+                System.out.println(scaledRow.toString());
+            }
+        }
+    }
+}
