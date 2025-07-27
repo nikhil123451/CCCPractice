@@ -6,7 +6,6 @@ public class ACoinGame {
         Scanner sc = new Scanner(System.in);
         List<List<Stack<Integer>>> testCases = new ArrayList<>();
 
-        // Read all input
         while (true) {
             int n = Integer.parseInt(sc.nextLine().trim());
             if (n == 0) break;
