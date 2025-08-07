@@ -1,50 +1,35 @@
 import java.util.*;
 
-public class AbsolutelyAcidic {
+public class MouseJourney { //taken from GPT and modified
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         
-        int N = sc.nextInt();
-        int[] freq = new int[1001]; // readings 1..1000
-        
-        for (int i = 0; i < N; i++) {
-            int reading = sc.nextInt();
-            freq[reading]++;
+        int R = sc.nextInt();
+        int C = sc.nextInt();
+        int K = sc.nextInt();
+
+        boolean[][] hasCat = new boolean[R + 1][C + 1];
+
+        for (int i = 0; i < K; i++) {
+            int r = sc.nextInt();
+            int c = sc.nextInt();
+            hasCat[r][c] = true;
         }
 
-        // Find the top two frequencies
-        int maxFreq = 0, secondMaxFreq = 0;
-        for (int f : freq) {
-            if (f > maxFreq) {
-                secondMaxFreq = maxFreq;
-                maxFreq = f;
-            } else if (f > secondMaxFreq && f < maxFreq) {
-                secondMaxFreq = f;
+        int[][] dp = new int[R + 1][C + 1];
+        dp[1][1] = 1; // Start point
+
+        for (int i = 1; i <= R; i++) {
+            for (int j = 1; j <= C; j++) {
+                if (hasCat[i][j]) {
+                    dp[i][j] = 0;
+                } else {
+                    if (i > 1) dp[i][j] += dp[i - 1][j];
+                    if (j > 1) dp[i][j] += dp[i][j - 1];
+                }
             }
         }
 
-        // Collect all readings with max and second max frequencies
-        List<Integer> maxFreqReadings = new ArrayList<>();
-        List<Integer> secondMaxFreqReadings = new ArrayList<>();
-        for (int r = 1; r <= 1000; r++) {
-            if (freq[r] == maxFreq) maxFreqReadings.add(r);
-            else if (freq[r] == secondMaxFreq) secondMaxFreqReadings.add(r);
-        }
-
-        int result = 0;
-        if (maxFreqReadings.size() >= 2) {
-            // Multiple readings with the highest frequency
-            result = maxFreqReadings.get(maxFreqReadings.size() - 1)
-                   - maxFreqReadings.get(0);
-        } else {
-            // Single reading with highest frequency
-            int highestReading = maxFreqReadings.get(0);
-            for (int r : secondMaxFreqReadings) {
-                result = Math.max(result, Math.abs(highestReading - r));
-            }
-        }
-
-        System.out.println(result);
-        sc.close();
+        System.out.println(dp[R][C]);
     }
 }
