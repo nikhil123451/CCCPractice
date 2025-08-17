@@ -45,7 +45,7 @@ public class ChancesOfWinning { //taken from GPT and modified
         scn.close(); //close the scanner
     }
 
-    static void calculateWinningOutcomes(int index) {
+    static void calculateWinningOutcomes(int index) { //helper method for calculating the winning outcomes
         if (index == remainingMatches.size()) { //if the match is the last match
             for (int team = 1; team <= 4; team++) { //looping through every team
                 if (team == favoriteTeam) { //if the current team is the favorite
