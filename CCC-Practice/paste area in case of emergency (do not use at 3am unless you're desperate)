@@ -1,53 +1,41 @@
 import java.util.*;
 
-public class WhoIsTaller {
+public class FactorSolitaire {
+
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        Scanner sc = new Scanner(System.in);
+        int N = sc.nextInt();
+        sc.close();
 
-        int N = scanner.nextInt(); // Number of people
-        int M = scanner.nextInt(); // Number of comparisons
+        long[] dp = new long[N + 1];
+        Arrays.fill(dp, Long.MAX_VALUE / 2); // prevent overflow
+        dp[1] = 0;
 
-        List<List<Integer>> graph = new ArrayList<>();
-        for (int i = 0; i <= N; i++) {
-            graph.add(new ArrayList<>());
+        // Precompute divisors
+        List<Integer>[] divisors = new ArrayList[N + 1];
+        for (int i = 1; i <= N; i++) {
+            divisors[i] = new ArrayList<>();
+        }
+        for (int i = 1; i <= N; i++) {
+            for (int j = i; j <= N; j += i) {
+                divisors[j].add(i);
+            }
         }
 
-        for (int i = 0; i < M; i++) {
-            int taller = scanner.nextInt();
-            int shorter = scanner.nextInt();
-            graph.get(taller).add(shorter); // taller -> shorter
-        }
+        // DP transitions
+        for (int c = 1; c < N; c++) {
+            long currCost = dp[c];
+            if (currCost >= Long.MAX_VALUE / 2) continue;
 
-        int p = scanner.nextInt();
-        int q = scanner.nextInt();
-
-        if (canReach(graph, p, q, N)) {
-            System.out.println("yes");
-        } else if (canReach(graph, q, p, N)) {
-            System.out.println("no");
-        } else {
-            System.out.println("unknown");
-        }
-    }
-
-    private static boolean canReach(List<List<Integer>> graph, int start, int target, int N) {
-        boolean[] visited = new boolean[N + 1];
-        Queue<Integer> queue = new LinkedList<>();
-        queue.add(start);
-        visited[start] = true;
-
-        while (!queue.isEmpty()) {
-            int current = queue.poll();
-            if (current == target) return true;
-
-            for (int neighbor : graph.get(current)) {
-                if (!visited[neighbor]) {
-                    visited[neighbor] = true;
-                    queue.add(neighbor);
+            for (int a : divisors[c]) {
+                int b = c / a;
+                int next = c + a;
+                if (next <= N) {
+                    dp[next] = Math.min(dp[next], currCost + b);
                 }
             }
         }
 
-        return false;
+        System.out.println(dp[N]);
     }
 }
