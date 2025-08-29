@@ -1,41 +1,43 @@
 import java.util.*;
 
-public class FactorSolitaire {
-
+public class TheGenevaConfection {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int N = sc.nextInt();
-        sc.close();
+        StringBuilder out = new StringBuilder();
 
-        long[] dp = new long[N + 1];
-        Arrays.fill(dp, Long.MAX_VALUE / 2); // prevent overflow
-        dp[1] = 0;
-
-        // Precompute divisors
-        List<Integer>[] divisors = new ArrayList[N + 1];
-        for (int i = 1; i <= N; i++) {
-            divisors[i] = new ArrayList<>();
-        }
-        for (int i = 1; i <= N; i++) {
-            for (int j = i; j <= N; j += i) {
-                divisors[j].add(i);
+        int T = sc.nextInt();
+        while (T-- > 0) {
+            int N = sc.nextInt();
+            int[] cars = new int[N];
+            for (int i = 0; i < N; i++) {
+                cars[i] = sc.nextInt();
             }
-        }
 
-        // DP transitions
-        for (int c = 1; c < N; c++) {
-            long currCost = dp[c];
-            if (currCost >= Long.MAX_VALUE / 2) continue;
+            int[] stack = new int[N];
+            int top = -1;
+            int need = 1;
 
-            for (int a : divisors[c]) {
-                int b = c / a;
-                int next = c + a;
-                if (next <= N) {
-                    dp[next] = Math.min(dp[next], currCost + b);
+            // process cars in reverse order (bottom → top of input list)
+            for (int i = N - 1; i >= 0; i--) {
+                int car = cars[i];
+
+                if (car == need) {
+                    need++;
+                } else {
+                    stack[++top] = car;
+                }
+
+                // flush stack
+                while (top >= 0 && stack[top] == need) {
+                    top--;
+                    need++;
                 }
             }
+
+            if (need == N + 1) out.append("Y\n");
+            else out.append("N\n");
         }
 
-        System.out.println(dp[N]);
+        System.out.print(out.toString());
     }
 }
