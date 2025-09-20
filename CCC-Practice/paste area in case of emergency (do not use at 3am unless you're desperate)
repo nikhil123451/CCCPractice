@@ -1,39 +1,56 @@
 import java.util.*;
 
-public class Jerseys {
+public class ConvexHull {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        int J = sc.nextInt();  // number of jerseys
-        int A = sc.nextInt();  // number of athletes
+        int K = sc.nextInt();
+        int N = sc.nextInt();
+        int M = sc.nextInt();
 
-        // Map sizes to ranks
-        Map<Character, Integer> rank = new HashMap<>();
-        rank.put('S', 0);
-        rank.put('M', 1);
-        rank.put('L', 2);
+        // adjacency list: each edge = {to, time, wear}
+        ArrayList<int[]>[] adj = new ArrayList[N+1];
+        for (int i = 1; i <= N; i++) adj[i] = new ArrayList<>();
 
-        int[] jerseys = new int[J + 1]; // jersey sizes (ranked)
-        for (int j = 1; j <= J; j++) {
-            char size = sc.next().charAt(0);
-            jerseys[j] = rank.get(size);
+        for (int i = 0; i < M; i++) {
+            int a = sc.nextInt(), b = sc.nextInt(), t = sc.nextInt(), h = sc.nextInt();
+            adj[a].add(new int[]{b, t, h});
+            adj[b].add(new int[]{a, t, h});
         }
 
-        boolean[] used = new boolean[J + 1]; // track assigned jerseys
-        int satisfied = 0;
+        int A = sc.nextInt(), B = sc.nextInt();
+        int C = K - 1; // hull wear limit
+        long INF = Long.MAX_VALUE / 4;
 
-        for (int i = 0; i < A; i++) {
-            char prefSize = sc.next().charAt(0);
-            int jerseyNum = sc.nextInt();
+        long[][] dist = new long[N+1][C+1];
+        for (int i = 1; i <= N; i++) Arrays.fill(dist[i], INF);
 
-            int pref = rank.get(prefSize);
+        // priority queue holds {time, node, usedWear}
+        PriorityQueue<long[]> pq = new PriorityQueue<>(Comparator.comparingLong(x -> x[0]));
+        dist[A][0] = 0;
+        pq.add(new long[]{0, A, 0});
 
-            if (!used[jerseyNum] && jerseys[jerseyNum] >= pref) {
-                used[jerseyNum] = true;
-                satisfied++;
+        while (!pq.isEmpty()) {
+            long[] cur = pq.poll();
+            long time = cur[0];
+            int node = (int)cur[1];
+            int used = (int)cur[2];
+            if (time != dist[node][used]) continue;
+
+            for (int[] e : adj[node]) {
+                int to = e[0], t = e[1], h = e[2];
+                int nu = used + h;
+                if (nu > C) continue;
+                long nt = time + t;
+                if (nt < dist[to][nu]) {
+                    dist[to][nu] = nt;
+                    pq.add(new long[]{nt, to, nu});
+                }
             }
         }
 
-        System.out.println(satisfied);
+        long ans = INF;
+        for (int w = 0; w <= C; w++) ans = Math.min(ans, dist[B][w]);
+        System.out.println(ans == INF ? -1 : ans);
     }
 }
