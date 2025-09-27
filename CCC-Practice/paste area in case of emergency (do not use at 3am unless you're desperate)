@@ -1,56 +1,68 @@
 import java.util.*;
 
-public class ConvexHull {
+public class GreedyForPies {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-
-        int K = sc.nextInt();
         int N = sc.nextInt();
+        int[] A = new int[N];
+        for (int i = 0; i < N; i++) A[i] = sc.nextInt();
         int M = sc.nextInt();
+        int[] B = new int[M];
+        for (int i = 0; i < M; i++) B[i] = sc.nextInt();
+        sc.close();
 
-        // adjacency list: each edge = {to, time, wear}
-        ArrayList<int[]>[] adj = new ArrayList[N+1];
-        for (int i = 1; i <= N; i++) adj[i] = new ArrayList<>();
-
-        for (int i = 0; i < M; i++) {
-            int a = sc.nextInt(), b = sc.nextInt(), t = sc.nextInt(), h = sc.nextInt();
-            adj[a].add(new int[]{b, t, h});
-            adj[b].add(new int[]{a, t, h});
+        // Sort B descending for optimal picks
+        Arrays.sort(B);
+        for (int i = 0; i < M / 2; i++) {
+            int tmp = B[i];
+            B[i] = B[M - 1 - i];
+            B[M - 1 - i] = tmp;
         }
 
-        int A = sc.nextInt(), B = sc.nextInt();
-        int C = K - 1; // hull wear limit
-        long INF = Long.MAX_VALUE / 4;
+        // dp[i][j][k] = max sugar using first i A pies and first j B pies
+        // k = 0 if last pie skipped, 1 if last pie eaten
+        int[][][] dp = new int[N + 1][M + 1][2];
 
-        long[][] dist = new long[N+1][C+1];
-        for (int i = 1; i <= N; i++) Arrays.fill(dist[i], INF);
+        for (int i = 0; i <= N; i++)
+            for (int j = 0; j <= M; j++)
+                Arrays.fill(dp[i][j], -1);
 
-        // priority queue holds {time, node, usedWear}
-        PriorityQueue<long[]> pq = new PriorityQueue<>(Comparator.comparingLong(x -> x[0]));
-        dist[A][0] = 0;
-        pq.add(new long[]{0, A, 0});
+        dp[0][0][0] = 0; // start with nothing eaten
 
-        while (!pq.isEmpty()) {
-            long[] cur = pq.poll();
-            long time = cur[0];
-            int node = (int)cur[1];
-            int used = (int)cur[2];
-            if (time != dist[node][used]) continue;
+        for (int i = 0; i <= N; i++) {
+            for (int j = 0; j <= M; j++) {
+                for (int k = 0; k <= 1; k++) {
+                    if (dp[i][j][k] == -1) continue;
+                    int curr = dp[i][j][k];
 
-            for (int[] e : adj[node]) {
-                int to = e[0], t = e[1], h = e[2];
-                int nu = used + h;
-                if (nu > C) continue;
-                long nt = time + t;
-                if (nt < dist[to][nu]) {
-                    dist[to][nu] = nt;
-                    pq.add(new long[]{nt, to, nu});
+                    // Option 1: take next A pie (if any)
+                    if (i < N) {
+                        // skip A[i]
+                        dp[i + 1][j][0] = Math.max(dp[i + 1][j][0], curr);
+                        // eat A[i] if last pie skipped
+                        if (k == 0) {
+                            dp[i + 1][j][1] = Math.max(dp[i + 1][j][1], curr + A[i]);
+                        }
+                    }
+
+                    // Option 2: take next B pie (if any)
+                    if (j < M) {
+                        // skip B[j]
+                        dp[i][j + 1][0] = Math.max(dp[i][j + 1][0], curr);
+                        // eat B[j] if last pie skipped
+                        if (k == 0) {
+                            dp[i][j + 1][1] = Math.max(dp[i][j + 1][1], curr + B[j]);
+                        }
+                    }
                 }
             }
         }
 
-        long ans = INF;
-        for (int w = 0; w <= C; w++) ans = Math.min(ans, dist[B][w]);
-        System.out.println(ans == INF ? -1 : ans);
+        int ans = 0;
+        for (int k = 0; k <= 1; k++) {
+            ans = Math.max(ans, dp[N][M][k]);
+        }
+
+        System.out.println(ans);
     }
 }
