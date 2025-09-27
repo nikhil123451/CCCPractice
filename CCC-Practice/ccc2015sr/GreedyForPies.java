@@ -1,0 +1,68 @@
+import java.util.*;
+
+public class GreedyForPies { //taken from GPT and modified
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int N = sc.nextInt();
+        int[] A = new int[N];
+        for (int i = 0; i < N; i++) A[i] = sc.nextInt();
+        int M = sc.nextInt();
+        int[] B = new int[M];
+        for (int i = 0; i < M; i++) B[i] = sc.nextInt();
+        sc.close();
+
+        // Sort B descending for optimal picks
+        Arrays.sort(B);
+        for (int i = 0; i < M / 2; i++) {
+            int tmp = B[i];
+            B[i] = B[M - 1 - i];
+            B[M - 1 - i] = tmp;
+        }
+
+        // dp[i][j][k] = max sugar using first i A pies and first j B pies
+        // k = 0 if last pie skipped, 1 if last pie eaten
+        int[][][] dp = new int[N + 1][M + 1][2];
+
+        for (int i = 0; i <= N; i++)
+            for (int j = 0; j <= M; j++)
+                Arrays.fill(dp[i][j], -1);
+
+        dp[0][0][0] = 0; // start with nothing eaten
+
+        for (int i = 0; i <= N; i++) {
+            for (int j = 0; j <= M; j++) {
+                for (int k = 0; k <= 1; k++) {
+                    if (dp[i][j][k] == -1) continue;
+                    int curr = dp[i][j][k];
+
+                    // Option 1: take next A pie (if any)
+                    if (i < N) {
+                        // skip A[i]
+                        dp[i + 1][j][0] = Math.max(dp[i + 1][j][0], curr);
+                        // eat A[i] if last pie skipped
+                        if (k == 0) {
+                            dp[i + 1][j][1] = Math.max(dp[i + 1][j][1], curr + A[i]);
+                        }
+                    }
+
+                    // Option 2: take next B pie (if any)
+                    if (j < M) {
+                        // skip B[j]
+                        dp[i][j + 1][0] = Math.max(dp[i][j + 1][0], curr);
+                        // eat B[j] if last pie skipped
+                        if (k == 0) {
+                            dp[i][j + 1][1] = Math.max(dp[i][j + 1][1], curr + B[j]);
+                        }
+                    }
+                }
+            }
+        }
+
+        int ans = 0;
+        for (int k = 0; k <= 1; k++) {
+            ans = Math.max(ans, dp[N][M][k]);
+        }
+
+        System.out.println(ans);
+    }
+}
