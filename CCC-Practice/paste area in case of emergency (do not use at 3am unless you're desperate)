@@ -1,68 +1,86 @@
 import java.util.*;
 
-public class GreedyForPies {
+public class WaitTime { //taken from GPT and modified
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int N = sc.nextInt();
-        int[] A = new int[N];
-        for (int i = 0; i < N; i++) A[i] = sc.nextInt();
+        if (!sc.hasNextInt()) return;
         int M = sc.nextInt();
-        int[] B = new int[M];
-        for (int i = 0; i < M; i++) B[i] = sc.nextInt();
-        sc.close();
+        sc.nextLine();
 
-        // Sort B descending for optimal picks
-        Arrays.sort(B);
-        for (int i = 0; i < M / 2; i++) {
-            int tmp = B[i];
-            B[i] = B[M - 1 - i];
-            B[M - 1 - i] = tmp;
+        // Read all entries
+        List<String[]> entries = new ArrayList<>();
+        for (int i = 0; i < M; i++) {
+            String[] parts = sc.nextLine().trim().split("\\s+");
+            entries.add(parts);
         }
 
-        // dp[i][j][k] = max sugar using first i A pies and first j B pies
-        // k = 0 if last pie skipped, 1 if last pie eaten
-        int[][][] dp = new int[N + 1][M + 1][2];
+        // Build list of events with absolute times
+        List<int[]> events = new ArrayList<>(); 
+        // each event = [typeChar, friendId, time]
+        // typeChar: 'R' or 'S'
+        int time = 0;
+        int i = 0;
+        while (i < entries.size()) {
+            String[] cur = entries.get(i);
+            char type = cur[0].charAt(0);
+            int x = Integer.parseInt(cur[1]);
+            if (type == 'R' || type == 'S') {
+                events.add(new int[]{type, x, time});
+                // Look ahead for W
+                if (i + 1 < entries.size() && entries.get(i + 1)[0].equals("W")) {
+                    time += Integer.parseInt(entries.get(i + 1)[1]);
+                    i += 2;
+                } else {
+                    time += 1;
+                    i += 1;
+                }
+            } else { // just a waiting period, not attached to event
+                time += x;
+                i++;
+            }
+        }
 
-        for (int i = 0; i <= N; i++)
-            for (int j = 0; j <= M; j++)
-                Arrays.fill(dp[i][j], -1);
+        // Track wait times
+        TreeMap<Integer, Long> totalWait = new TreeMap<>();
+        HashMap<Integer, Integer> pending = new HashMap<>();
+        HashSet<Integer> invalid = new HashSet<>();
+        HashSet<Integer> friends = new HashSet<>();
 
-        dp[0][0][0] = 0; // start with nothing eaten
+        for (int[] e : events) {
+            char type = (char) e[0];
+            int id = e[1];
+            int t = e[2];
 
-        for (int i = 0; i <= N; i++) {
-            for (int j = 0; j <= M; j++) {
-                for (int k = 0; k <= 1; k++) {
-                    if (dp[i][j][k] == -1) continue;
-                    int curr = dp[i][j][k];
-
-                    // Option 1: take next A pie (if any)
-                    if (i < N) {
-                        // skip A[i]
-                        dp[i + 1][j][0] = Math.max(dp[i + 1][j][0], curr);
-                        // eat A[i] if last pie skipped
-                        if (k == 0) {
-                            dp[i + 1][j][1] = Math.max(dp[i + 1][j][1], curr + A[i]);
-                        }
-                    }
-
-                    // Option 2: take next B pie (if any)
-                    if (j < M) {
-                        // skip B[j]
-                        dp[i][j + 1][0] = Math.max(dp[i][j + 1][0], curr);
-                        // eat B[j] if last pie skipped
-                        if (k == 0) {
-                            dp[i][j + 1][1] = Math.max(dp[i][j + 1][1], curr + B[j]);
-                        }
+            if (type == 'R') {
+                friends.add(id);
+                totalWait.putIfAbsent(id, 0L);
+                if (pending.containsKey(id)) {
+                    invalid.add(id);
+                }
+                pending.put(id, t);
+            } else if (type == 'S') {
+                totalWait.putIfAbsent(id, 0L);
+                if (!pending.containsKey(id)) {
+                    invalid.add(id);
+                } else {
+                    int recvTime = pending.remove(id);
+                    if (!invalid.contains(id)) {
+                        totalWait.put(id, totalWait.get(id) + (t - recvTime));
                     }
                 }
             }
         }
 
-        int ans = 0;
-        for (int k = 0; k <= 1; k++) {
-            ans = Math.max(ans, dp[N][M][k]);
+        // Unreplied messages → invalid
+        for (int id : pending.keySet()) {
+            invalid.add(id);
         }
 
-        System.out.println(ans);
+        // Output in ascending friend order
+        for (int id : totalWait.keySet()) {
+            if (!friends.contains(id)) continue;
+            long total = invalid.contains(id) ? -1 : totalWait.get(id);
+            System.out.println(id + " " + total);
+        }
     }
 }
