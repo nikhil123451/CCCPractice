@@ -27,6 +27,6 @@ public class PiDay {
             for (int[] arr1d : arr2d)
                 Arrays.fill(arr1d, -1);
 
-        System.out.println(countWays(n, k, 1));
+        System.out.println(countWays(n, k, 1)); ummmmmmmmmmmmmmmm
     }
 }
