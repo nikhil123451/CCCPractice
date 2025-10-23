@@ -1,84 +1,43 @@
 import java.util.*;
 
-public class PhonomenalReviews { //taken from GPT and modified
+public class NailedIt { //taken from GPT and modified
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         int N = sc.nextInt();
-        int M = sc.nextInt();
-
-        boolean[] isPho = new boolean[N];
-        for (int i = 0; i < M; i++) {
-            isPho[sc.nextInt()] = true;
-        }
-
-        List<List<Integer>> adj = new ArrayList<>();
-        for (int i = 0; i < N; i++) adj.add(new ArrayList<>());
-
-        for (int i = 0; i < N - 1; i++) {
-            int a = sc.nextInt(), b = sc.nextInt();
-            adj.get(a).add(b);
-            adj.get(b).add(a);
-        }
-
-        // Step 1: Prune non-Pho leaves
-        Queue<Integer> q = new ArrayDeque<>();
-        int remainingEdges = N - 1;
-        int[] degree = new int[N];
-        for (int i = 0; i < N; i++) degree[i] = adj.get(i).size();
+        int[] freq = new int[2001]; // wood lengths range from 1 to 2000
 
         for (int i = 0; i < N; i++) {
-            if (degree[i] == 1 && !isPho[i]) q.add(i);
+            int length = sc.nextInt();
+            freq[length]++;
         }
 
-        boolean[] removed = new boolean[N];
-        while (!q.isEmpty()) {
-            int u = q.poll();
-            removed[u] = true;
-            for (int v : adj.get(u)) {
-                degree[v]--;
-                if (!removed[v]) {
-                    remainingEdges--;
-                    if (degree[v] == 1 && !isPho[v]) q.add(v);
+        int maxFenceLength = 0;      // number of boards in the longest fence
+        int numMaxHeights = 0;       // number of different heights achieving that maximum
+
+        // possible board lengths go from 2 to 4000 (sum of two pieces)
+        for (int s = 2; s <= 4000; s++) {
+            int boards = 0;
+
+            // combine pairs that sum to s
+            for (int i = 1; i <= s / 2 && i <= 2000; i++) {
+                int j = s - i;
+                if (j < 1 || j > 2000) continue;
+
+                if (i == j) {
+                    boards += freq[i] / 2;
+                } else {
+                    boards += Math.min(freq[i], freq[j]);
                 }
             }
-        }
 
-        // Step 2: Find diameter of remaining tree
-        int start = -1;
-        for (int i = 0; i < N; i++) {
-            if (!removed[i]) {
-                start = i;
-                break;
+            if (boards > maxFenceLength) {
+                maxFenceLength = boards;
+                numMaxHeights = 1;
+            } else if (boards == maxFenceLength && boards > 0) {
+                numMaxHeights++;
             }
         }
 
-        int farthestNode = bfs(start, adj, removed).getKey();
-        int diameter = bfs(farthestNode, adj, removed).getValue();
-
-        System.out.println(2 * remainingEdges - diameter);
-        
-        sc.close();
-    }
-
-    private static AbstractMap.SimpleEntry<Integer, Integer> bfs(int start, List<List<Integer>> adj, boolean[] removed) {
-        Queue<Integer> q = new ArrayDeque<>();
-        int[] dist = new int[adj.size()];
-        Arrays.fill(dist, -1);
-        q.add(start);
-        dist[start] = 0;
-
-        int farthestNode = start;
-        while (!q.isEmpty()) {
-            int u = q.poll();
-            for (int v : adj.get(u)) {
-                if (!removed[v] && dist[v] == -1) {
-                    dist[v] = dist[u] + 1;
-                    q.add(v);
-                    if (dist[v] > dist[farthestNode]) farthestNode = v;
-                }
-            }
-        }
-
-        return new AbstractMap.SimpleEntry<>(farthestNode, dist[farthestNode]);
+        System.out.println(maxFenceLength + " " + numMaxHeights);
     }
 }
