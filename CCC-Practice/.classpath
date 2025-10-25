@@ -15,6 +15,7 @@
 	<classpathentry kind="src" path="ccc2016jr"/>
 	<classpathentry kind="src" path="ccc2016sr"/>
 	<classpathentry kind="src" path="ccc2017jr"/>
+	<classpathentry kind="src" path="ccc2017sr"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-23">
 		<attributes>
 			<attribute name="module" value="true"/>
