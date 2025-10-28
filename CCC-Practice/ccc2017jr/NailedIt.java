@@ -30,7 +30,7 @@ public class NailedIt { //taken from GPT and modified
 
                 if (i == j) { //if the 2 pieces are of equal length
                     boards += frequencies[i] / 2; //getting the number of boards made with 2 pieces
-                } else {
+                } else { //if the pieces are not of equal length
                     boards += Math.min(frequencies[i], frequencies[j]); //getting the number of boards made by getting the frequency of the material not in access
                 }
             }
