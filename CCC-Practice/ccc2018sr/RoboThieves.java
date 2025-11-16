@@ -2,167 +2,196 @@ import java.util.*;
 
 public class RoboThieves { //taken from GPT and modified
 
-    static int N, M;
-    static char[][] grid;
-    static boolean[][] watched;
-    static int[][] dist;
-    static int[] dr = {-1, 1, 0, 0};
-    static int[] dc = {0, 0, -1, 1};
+    static int gridLength, gridWidth; //declaring variables for the grid's length and width
+    static char[][] grid; //making a 2d char array for the grid
+    static boolean[][] visible; //a boolean array to keep track of where cameras can see on the grid
+    static int[][] distances; //declaring a 2d array to keep track of the distances from the starting point to every other cell in the grid (-1 if the cell isn't reachable)
+    static int[] rowMovement = {-1, 1, 0, 0}; //array for up and down movement
+    static int[] columnMovement = {0, 0, -1, 1}; //array for left and right movement
 
-    static int NINF = -1;
+    static final int IMPOSSIBLE_TRAVEL_VALUE = -1; //-1 represents the value where the robot cannot reach the cell
+    static final int DIRECTIONS = 4;
+    
+    static Scanner scn = new Scanner(System.in); //initializing a scanner
+    
+    public static void main(String[] args) { //main method
+        gridLength = scn.nextInt(); //getting the grid's length
+        gridWidth = scn.nextInt(); //getting the grid's width
+        grid = new char[gridLength][gridWidth]; //making the grid with the given dimensions
 
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+        int startingRowCoordinate = 0; 
+        int startingColumnCoordinate = 0;
 
-        N = sc.nextInt();
-        M = sc.nextInt();
-        grid = new char[N][M];
-
-        int sr = 0, scn = 0;
-
-        for (int i = 0; i < N; i++) {
-            String line = sc.next();
-            for (int j = 0; j < M; j++) {
-                grid[i][j] = line.charAt(j);
-                if (grid[i][j] == 'S') {
-                    sr = i;
-                    scn = j;
+        for (int i = 0; i < gridLength; i++) { //looping through the rows
+            String line = scn.next(); //getting the data for the row
+            for (int j = 0; j < gridWidth; j++) { //looping through each column position for the row
+                grid[i][j] = line.charAt(j); //setting the grid value accordingly
+                if (grid[i][j] == 'S') { //if the cell i the starting space
+                    startingRowCoordinate = i; //set the row coordinate accordingly
+                    startingColumnCoordinate = j; //set the column coordinate accordingly
                 }
             }
         }
 
-        watched = new boolean[N][M];
-        markWatchedCells();
+        visible = new boolean[gridLength][gridWidth]; //initializing the visible array
+        markVisibleCells(); //activating the boolean flag for every "visible" cell
 
-        dist = new int[N][M];
-        for (int[] row : dist) Arrays.fill(row, NINF);
-
-        bfs(sr, scn);
-
-        // Output distances only for '.' in row-major order
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < M; j++) {
-                if (grid[i][j] == '.') {
-                    System.out.println(dist[i][j]);
-                }
-            }
+        distances = new int[gridLength][gridWidth]; //initializing the distances array
+        for (int[] row : distances) { //looping through every row in the 2d array
+        	Arrays.fill(row, IMPOSSIBLE_TRAVEL_VALUE); //filling everything in the array with -1 initially
         }
-    }
 
-    // Mark cells watched by cameras
-    static void markWatchedCells() {
-        for (int r = 0; r < N; r++) {
-            for (int c = 0; c < M; c++) {
-                if (grid[r][c] == 'C') {
-                    // Up
-                    for (int nr = r - 1; nr >= 0; nr--) {
-                        if (grid[nr][c] == 'W') break;
-                        if (grid[nr][c] == '.') watched[nr][c] = true;
-                    }
-                    // Down
-                    for (int nr = r + 1; nr < N; nr++) {
-                        if (grid[nr][c] == 'W') break;
-                        if (grid[nr][c] == '.') watched[nr][c] = true;
-                    }
-                    // Left
-                    for (int nc = c - 1; nc >= 0; nc--) {
-                        if (grid[r][nc] == 'W') break;
-                        if (grid[r][nc] == '.') watched[r][nc] = true;
-                    }
-                    // Right
-                    for (int nc = c + 1; nc < M; nc++) {
-                        if (grid[r][nc] == 'W') break;
-                        if (grid[r][nc] == '.') watched[r][nc] = true;
-                    }
+        searchPaths(startingRowCoordinate, startingColumnCoordinate); //searching the paths to every empty cell and recording the distances
+
+        for (int i = 0; i < gridLength; i++) { //looping through every row
+            for (int j = 0; j < gridWidth; j++) { //looping through every column position for the row
+                if (grid[i][j] == '.') { //if the cell is an empty cell
+                    System.out.println(distances[i][j]); //print out the distance recorded for the cell
                 }
             }
         }
     }
 
-    // Follow conveyors until reaching a stable non-conveyor cell or invalid
-    static int[] followConveyor(int r, int c) {
-        boolean[][] visitedConv = new boolean[N][M];
-        int cr = r, cc = c;
-
-        while (true) {
-            if (grid[cr][cc] != 'L' && grid[cr][cc] != 'R' && grid[cr][cc] != 'U' && grid[cr][cc] != 'D') {
-                return new int[]{cr, cc}; // empty or S
-            }
-            if (visitedConv[cr][cc]) return null; // cycle ⇒ invalid
-            visitedConv[cr][cc] = true;
-
-            int nr = cr, nc = cc;
-            switch (grid[cr][cc]) {
-                case 'L': nc--; break;
-                case 'R': nc++; break;
-                case 'U': nr--; break;
-                case 'D': nr++; break;
-            }
-
-            if (grid[nr][nc] == 'W' || grid[nr][nc] == 'C') return null;
-            cr = nr;
-            cc = nc;
-        }
-    }
-
-    static void bfs(int sr, int sc) {
-        Queue<int[]> q = new LinkedList<>();
-        q.add(new int[]{sr, sc});
-        dist[sr][sc] = 0;
-
-        // If S is on a conveyor, follow it immediately (no cost)
-        if (isConveyor(sr, sc)) {
-            int[] end = followConveyor(sr, sc);
-            if (end != null) {
-                dist[end[0]][end[1]] = 0;
-                q.add(end);
-            }
-        }
-
-        while (!q.isEmpty()) {
-            int[] cur = q.poll();
-            int r = cur[0], c = cur[1];
-            int curDist = dist[r][c];
-
-            for (int d = 0; d < 4; d++) {
-                int nr = r + dr[d], nc = c + dc[d];
-
-                if (!valid(nr, nc)) continue;
-                if (grid[nr][nc] == 'W' || grid[nr][nc] == 'C') continue;
-
-                // Cannot step into watched empty cells
-                if (grid[nr][nc] == '.' && watched[nr][nc]) continue;
-
-                int nextDist = curDist + 1;
-
-                // If stepping onto a conveyor, follow it
-                if (isConveyor(nr, nc)) {
-                    int[] end = followConveyor(nr, nc);
-                    if (end == null) continue;
-
-                    int er = end[0], ec = end[1];
-                    if (watched[er][ec] && grid[er][ec] == '.') continue;
-
-                    if (dist[er][ec] == NINF || dist[er][ec] > nextDist) {
-                        dist[er][ec] = nextDist;
-                        q.add(new int[]{er, ec});
+    static void markVisibleCells() { //helper method to mark cells that are "visible"
+        for (int r = 0; r < gridLength; r++) { //looping through each row
+            for (int c = 0; c < gridWidth; c++) { //looping through each column position for the row
+                if (grid[r][c] == 'C') { //if the cell is a camera
+                	
+                    for (int newRow = r - 1; newRow >= 0; newRow--) { //looping through every row from the current one up
+                        if (grid[newRow][c] == 'W') { //if there is a wall in the way
+                        	break; //go to the next direction
+                        }
+                        if (grid[newRow][c] == '.') { //if the cell is an empty cell
+                        	visible[newRow][c] = true; //set the cell's visibility to true
+                        }
                     }
-                } else {
-                    if (dist[nr][nc] == NINF || dist[nr][nc] > nextDist) {
-                        dist[nr][nc] = nextDist;
-                        q.add(new int[]{nr, nc});
+                    
+                    for (int newRow = r + 1; newRow < gridLength; newRow++) { //looping through every row from the current one down
+                        if (grid[newRow][c] == 'W') { //if there is a wall in the way
+                        	break; //go to the next direction
+                        }
+                        if (grid[newRow][c] == '.') { //if the cell is an empty cell
+                        	visible[newRow][c] = true; //set the cell's visibility to true
+                        }
+                    }
+                    
+                    for (int newColumn = c - 1; newColumn >= 0; newColumn--) { //looping through every column from the current one left
+                        if (grid[r][newColumn] == 'W') { //if there is a wall in the way
+                        	break; //go to the next direction
+                        }
+                        if (grid[r][newColumn] == '.') { //if the cell is an empty cell
+                        	visible[r][newColumn] = true; //set the cell's visibility to true
+                        }
+                    }
+                    
+                    for (int newColumn = c + 1; newColumn < gridWidth; newColumn++) { //looping through every column from the current one right
+                        if (grid[r][newColumn] == 'W') { //if there's a wall in the way
+                        	break; //go to the next camera
+                        }
+                        if (grid[r][newColumn] == '.') { //if the cell is an empty cell
+                        	visible[r][newColumn] = true; //set the cell's visibility to true
+                        }
                     }
                 }
             }
         }
     }
 
-    static boolean valid(int r, int c) {
-        return r >= 0 && r < N && c >= 0 && c < M;
+    static int[] followConveyor(int row, int column) { //method to process conveyor logic and output the new coordinates of the robot's location
+        boolean[][] visited = new boolean[gridLength][gridWidth]; //making a boolean array to check if a conveyor's been visited or not
+        int currentRow = row, currentColumn = column; //setting the current row and column accordingly
+
+        while (true) { //keep looping until we need to break
+            if (grid[currentRow][currentColumn] != 'L' && grid[currentRow][currentColumn] != 'R' && grid[currentRow][currentColumn] != 'U' && grid[currentRow][currentColumn] != 'D') { //if the current cell isn't a conveyor
+                return new int[]{currentRow, currentColumn}; //return the current position
+            }
+            if (visited[currentRow][currentColumn]) { //if we've already visited the conveyor
+            	return null; //return null since we're in a loop
+            }
+            visited[currentRow][currentColumn] = true; //set this conveyor as visited
+
+            int newRow = currentRow, newColumn = currentColumn; //setting newRow and newColumn to the current ones for now
+            switch (grid[currentRow][currentColumn]) { //switching the conveyor type
+                case 'L': //if it's a left-facing conveyor
+                	newColumn--; //move the robot's position left
+                	break; //break the loop
+                case 'R':  //if it's a right-facing conveyor
+                	newColumn++; //move the robot's position right
+                	break; //break the loop
+                case 'U': //if it's a upward-facing conveyor
+                	newRow--; //move the robot's position up
+                	break; //break the loop
+                case 'D': //if it's a downward-facing conveyor
+                	newRow++;  //move the robot's position down
+                	break; //break the loop
+            }
+
+            if (grid[newRow][newColumn] == 'W' || grid[newRow][newColumn] == 'C') { //if the robot's new coordinates are in a wall or camera
+            	return null; //return null since robots can't do that
+            }
+            currentRow = newRow; //set the new current row accordingly
+            currentColumn = newColumn; //set the new current column accordingly
+        }
     }
 
-    static boolean isConveyor(int r, int c) {
-        char ch = grid[r][c];
-        return ch == 'L' || ch == 'R' || ch == 'U' || ch == 'D';
+    static void searchPaths(int startingRow, int startingColumn) { //breadth-first search method to find distances to empty cells
+        Queue<int[]> pathQueue = new LinkedList<>(); //creating a pathQueue to keep track of paths to check
+        pathQueue.add(new int[]{startingRow, startingColumn}); //adding the robot's starting position to the queue
+        distances[startingRow][startingColumn] = 0; //the distance from the starting point to the starting point is 0
+
+        while (!pathQueue.isEmpty()) { //while there are paths to check
+            int[] currentPath = pathQueue.poll(); //getting the top-most path to check
+            int row = currentPath[0], column = currentPath[1]; //getting the row and column coordinates for the path
+            int currentDistance = distances[row][column]; //getting the distance from the starting position
+
+            for (int direction = 0; direction < DIRECTIONS; direction++) { //looping through every direction the robot can travel in
+                int newRow = row + rowMovement[direction]; //accordingly updating the row coordinate based on the direction
+                int newColumn = column + columnMovement[direction]; //accordingly updating the column coordinate based on the direction
+
+                if (!isValid(newRow, newColumn)) { //if the position is not within the grid
+                	continue; //go to the next direction
+                }
+                if (grid[newRow][newColumn] == 'W' || grid[newRow][newColumn] == 'C') { //if the new position is a wall or a camera
+                	continue; //go to the next direction
+                }
+
+                if (grid[newRow][newColumn] == '.' && visible[newRow][newColumn]) { //if the new position is a visible empty cell
+                	continue; //go to the next direction
+                }
+
+                int nextDistance = currentDistance + 1; //setting the next distance accordingly
+
+                if (isConveyor(newRow, newColumn)) { //if the new position is a conveyor
+                    int[] endingCoordinates = followConveyor(newRow, newColumn); //setting the ending coordinates after following the conveyor system
+                    if (endingCoordinates == null) { //if the conveyor leads to a wall, camera, or a loop
+                    	continue; //go to the next direction
+                    }
+
+                    int endingRow = endingCoordinates[0], endingColumn = endingCoordinates[1]; //getting the ending row and column coordinates
+                    if (visible[endingRow][endingColumn] && grid[endingRow][endingColumn] == '.') { //if the ending position is a visible empty cell
+                    	continue; //go to the next direction
+                    }
+
+                    if (distances[endingRow][endingColumn] == IMPOSSIBLE_TRAVEL_VALUE || distances[endingRow][endingColumn] > nextDistance) { //if the distance of the ending position has not been assigned a proper value or if it's greater than the next distance
+                        distances[endingRow][endingColumn] = nextDistance; //set it equal to the next distance
+                        pathQueue.add(new int[]{endingRow, endingColumn}); //add the path to the queue to be checked
+                    }
+                } else { //if the new position is not a conveyor
+                    if (distances[newRow][newColumn] == IMPOSSIBLE_TRAVEL_VALUE || distances[newRow][newColumn] > nextDistance) { //if the distance of the new position has not been assigned a value yet or if it's greater than the next distance
+                        distances[newRow][newColumn] = nextDistance; //set it equal to the next distance
+                        pathQueue.add(new int[]{newRow, newColumn}); //add the path to the queue to be checked
+                    }
+                }
+            }
+        }
+    }
+
+    static boolean isValid(int row, int column) { //method to check if a given position is within the grid
+        return row >= 0 && row < gridLength && column >= 0 && column < gridWidth; //returns true if both the row and column coordinates fit within their respective bounds. returns false otherwise
+    }
+
+    static boolean isConveyor(int row, int column) { //helper method to check if a given cell is a conveyor
+        char cellType = grid[row][column]; //getting the cell type
+        return cellType == 'L' || cellType == 'R' || cellType == 'U' || cellType == 'D'; //returns true if the cellType is a conveyor (as given by the problem). returns false otherwise
     }
 }
