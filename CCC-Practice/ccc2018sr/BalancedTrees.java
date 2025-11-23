@@ -1,38 +1,43 @@
 import java.util.*;
 import java.math.BigInteger;
 
-public class BalancedTrees {
-    // memoization map: weight -> number of perfectly balanced trees (BigInteger)
-    static HashMap<Long, BigInteger> memo = new HashMap<>();
+public class BalancedTrees { //taken from GPT and modified
+    static HashMap<Long, BigInteger> memory = new HashMap<>(); //hashMap to store previously calculated trees
+    
+    static Scanner scn = new Scanner(System.in); //initializing a scanner
+    
+    public static void main(String[] args) { //main method
+        long weight = scn.nextLong(); //getting the weight
+        scn.close(); //closing the scanner
 
-    public static void main(String[] args) {
-        Scanner in = new Scanner(System.in);
-        long N = in.nextLong();
-        in.close();
-
-        memo.put(1L, BigInteger.ONE);
-        BigInteger ans = countTrees(N);
-        System.out.println(ans);
+        memory.put(1L, BigInteger.ONE); //mapping a weight of one to one tree with that weight
+        BigInteger trees = countTrees(weight); //counting the amount of trees with the given weight
+        System.out.println(trees); //printing out the result
     }
 
-    // returns number of perfectly balanced trees of weight w
-    static BigInteger countTrees(long w) {
-        if (memo.containsKey(w)) return memo.get(w);
-        BigInteger res = BigInteger.ZERO;
+    static BigInteger countTrees(long weight) { //method that gets the number of trees with a given weight
+        if (memory.containsKey(weight)) { //if the number of trees for the weight has already been calculated
+        	return memory.get(weight); //return the pre-calculated value
+        }
+        BigInteger trees = BigInteger.ZERO; //initially setting the amount to 0
 
-        long l = 2;
-        while (l <= w) {
-            long q = w / l;               // floor(w / k) for k in [l..r]
-            if (q == 0) break;            // should not happen because l<=w implies q>=1
-            long r = w / q;               // largest k with floor(w/k) == q
-            if (r > w) r = w;
-            long cnt = r - l + 1;         // number of k values producing this q
-            BigInteger waysQ = countTrees(q);
-            res = res.add(waysQ.multiply(BigInteger.valueOf(cnt)));
-            l = r + 1;
+        long length = 2; //setting our initial length to be calculated as 2 (as given in the problem)
+        while (length <= weight) { //while our tree length is less than or equal to the given weight
+            long group = weight / length; //diving the weight into even groups
+            if (group == 0) { //if weight is somehow less than the length
+            	break; //break the loop
+            }
+            long range = weight / group; //getting the range of distributed groups
+            if (range > weight) { //if the range exceeds the weight
+            	range = weight; //cap it at the weight
+            }
+            long count = range - length + 1; //getting the amount of integers from the value of the length to the value of the range
+            BigInteger treesOfGroup = countTrees(group); //getting the amount of trees for the group (which is now its own weight)
+            trees = trees.add(treesOfGroup.multiply(BigInteger.valueOf(count))); //adding the amount of trees for the group times the amount they show up
+            length = range + 1; //going to the next block to be processed
         }
 
-        memo.put(w, res);
-        return res;
+        memory.put(weight, trees); //putting the amount of trees for the given weight
+        return trees; //returning the final amount of trees
     }
 }
