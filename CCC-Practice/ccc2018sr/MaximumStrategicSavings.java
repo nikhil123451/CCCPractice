@@ -1,127 +1,146 @@
 import java.util.*;
 
 public class MaximumStrategicSavings { //taken from GPT and modified
-    static int[] pCity, szCity;
-    static int[] pPlanet, szPlanet;
+    static int[] cityParents, cityParentDistances; //arrays for keeping track of parent/root nodes for cities and the distances to those nodes
+    static int[] planetParents, planetParentDistances; //arrays for keeping track of parent/root nodes for planets and the distances to those nodes
 
-    static int findCity(int x) {
-        while (pCity[x] != x) {
-            pCity[x] = pCity[pCity[x]];
-            x = pCity[x];
+    static int findCityParent(int node) { //helper method to find the city parent for a given node
+        while (cityParents[node] != node) { //while we haven't found a node that leads to itself (the top-most parent)
+            cityParents[node] = cityParents[cityParents[node]]; //setting the node's new parent to the parent of its current parent
+            node = cityParents[node]; //setting the node to be its parent
         }
-        return x;
+        return node; //returning the parent node after finding it
     }
 
-    static int findPlanet(int x) {
-        while (pPlanet[x] != x) {
-            pPlanet[x] = pPlanet[pPlanet[x]];
-            x = pPlanet[x];
+    static int findPlanetParent(int node) { //helper method to find the planet parent for a given node
+        while (planetParents[node] != node) { //while we haven't found a node that leads to itself (the top-most parent)
+            planetParents[node] = planetParents[planetParents[node]]; //setting the node's new parent to the parent of its current parent
+            node = planetParents[node]; //setting the node to be its parent
         }
-        return x;
+        return node; //returning the parent node after finding it
     }
 
-    static boolean unionCity(int a, int b) {
-        a = findCity(a);
-        b = findCity(b);
-        if (a == b) return false;
-        if (szCity[a] < szCity[b]) { int t = a; a = b; b = t; }
-        pCity[b] = a;
-        szCity[a] += szCity[b];
-        return true;
+    static boolean cityMerge(int nodeA, int nodeB) { //helper method to merge city components if they aren't already in the same component
+        nodeA = findCityParent(nodeA); //getting the top-most parent for nodeA
+        nodeB = findCityParent(nodeB); //getting the top-most parent for nodeB
+        if (nodeA == nodeB) { //if they have the same parent
+        	return false; //return false and do nothing because they are already part of the same component
+        }
+        if (cityParentDistances[nodeA] < cityParentDistances[nodeB]) { //if nodeA is closer to its parent than B is
+        	int placeholderVariable = nodeA; //storing the value of nodeA somewhere else for now
+        	nodeA = nodeB; //setting nodeA to nodeB
+        	nodeB = placeholderVariable; //setting node B to the previous value of nodeA
+        }
+        cityParents[nodeB] = nodeA; //setting nodeA as nodeB's parent
+        cityParentDistances[nodeA] += cityParentDistances[nodeB]; //increment the distances accordingly
+        return true; //return true for a successful city component merge
     }
 
-    static boolean unionPlanet(int a, int b) {
-        a = findPlanet(a);
-        b = findPlanet(b);
-        if (a == b) return false;
-        if (szPlanet[a] < szPlanet[b]) { int t = a; a = b; b = t; }
-        pPlanet[b] = a;
-        szPlanet[a] += szPlanet[b];
-        return true;
+    static boolean planetMerge(int nodeA, int nodeB) { //helper method to merge planet components if they aren't already in the same component
+        nodeA = findPlanetParent(nodeA); //getting the top-most parent for nodeA
+        nodeB = findPlanetParent(nodeB); //getting the top-most parent for nodeB
+        if (nodeA == nodeB) { //if they have the same parent
+        	return false; //return false and do nothing because they're already a part of the same component
+        }
+        if (planetParentDistances[nodeA] < planetParentDistances[nodeB]) { //if nodeA is closer to its parent than B is
+        	int placeholderVariable = nodeA; //storing the value of nodeA somewhere else temporarily
+        	nodeA = nodeB; //setting node A to the value of node B
+        	nodeB = placeholderVariable; //setting node B to the previous value of nodeA
+        }
+        planetParents[nodeB] = nodeA; //setting node A to node B's parent
+        planetParentDistances[nodeA] += planetParentDistances[nodeB]; //increment the distances accordingly
+        return true; //return true for a successful planet component merge
     }
 
-    public static void main(String[] args) {
-        Scanner in = new Scanner(System.in);
-        int N = in.nextInt(); // planets
-        int M = in.nextInt(); // cities per planet
-        int P = in.nextInt(); // flight types per planet
-        int Q = in.nextInt(); // portal types per city
+    static Scanner scn = new Scanner(System.in); //initializing a scanner
+    
+    public static void main(String[] args) { //main method
+        int planets = scn.nextInt(); //getting the number of planets
+        int citiesPerPlanet = scn.nextInt(); //getting the amount of cities per planet
+        int flights = scn.nextInt(); //getting the amount of flights
+        int portals = scn.nextInt(); //getting the amount of portals
 
-        int[] a = new int[P];
-        int[] b = new int[P];
-        long[] c = new long[P];
-        long sumFlights = 0;
-        for (int i = 0; i < P; ++i) {
-            a[i] = in.nextInt() - 1; // 0-based city index
-            b[i] = in.nextInt() - 1;
-            c[i] = in.nextLong();
-            sumFlights += c[i];
+        int[] flightStarters = new int[flights]; //making an array for all the starting points for flights
+        int[] flightEnders = new int[flights]; //making an array for all the ending points for flights
+        long[] flightCosts = new long[flights]; //making an array for the costs of all flights
+        long totalflightCost = 0; //variable for the total flight cost
+        for (int i = 0; i < flights; ++i) { //looping through every flight
+            flightStarters[i] = scn.nextInt() - 1; //setting the flight's starting point (-1 cuz java is 0-indexed)
+            flightEnders[i] = scn.nextInt() - 1; //setting the flight's ending point (-1 cuz java is 0-indexed)
+            flightCosts[i] = scn.nextLong(); //setting the flight's cost
+            totalflightCost += flightCosts[i]; //increment the total cost accordingly
         }
 
-        int[] x = new int[Q];
-        int[] y = new int[Q];
-        long[] z = new long[Q];
-        long sumPortals = 0;
-        for (int j = 0; j < Q; ++j) {
-            x[j] = in.nextInt() - 1; // 0-based planet index
-            y[j] = in.nextInt() - 1;
-            z[j] = in.nextLong();
-            sumPortals += z[j];
+        int[] portalStarters = new int[portals]; //making an array for all the starting points for portals
+        int[] portalEnders = new int[portals]; //making an array for all the ending points for portals
+        long[] portalCosts = new long[portals]; //making an array for the costs of all portals
+        long totalPortalCost = 0; //variable for the total portal cost
+        for (int j = 0; j < portals; ++j) { //looping through every portal
+            portalStarters[j] = scn.nextInt() - 1; //setting the flight's starting point (-1 cuz java is 0-indexed)
+            portalEnders[j] = scn.nextInt() - 1; //setting the flight's ending point (-1 cuz java is 0-indexed)
+            portalCosts[j] = scn.nextLong(); //setting the portal's cost
+            totalPortalCost += portalCosts[j]; //incrementing the total cost accordingly
+        }
+        
+        long totalCost = totalflightCost * (long)planets + totalPortalCost * (long)citiesPerPlanet; //calculating the total cost of every flight and portal put together
+
+        Integer[] flightIndices = new Integer[flights]; //making an Integer[] array to store flight indices
+        for (int i = 0; i < flights; ++i) { //for every flight
+        	flightIndices[i] = i; //set the index accordingly
+        }
+        Arrays.sort(flightIndices, (indexA, indexB) -> Long.compare(flightCosts[indexA], flightCosts[indexB])); //sorting the indices based on increasing costs
+
+        Integer[] portalIndices = new Integer[portals]; //making an Integer[] array to store portal indices
+        for (int i = 0; i < portals; ++i) { //for every portal
+        	portalIndices[i] = i; //set the index accordingly
+        }
+        Arrays.sort(portalIndices, (indexA, indexB) -> Long.compare(portalCosts[indexA], portalCosts[indexB])); //sorting the indices based on increasing costs
+
+        cityParents = new int[citiesPerPlanet]; //initializing the cityParents array
+        cityParentDistances = new int[citiesPerPlanet]; //initializing the respective distances array
+        for (int i = 0; i < citiesPerPlanet; ++i) { //for every city
+        	cityParents[i] = i; //set every node to be its own parent initially
+        	cityParentDistances[i] = 1; //the distance to yourself would just be one (inclusive)
+        }
+        planetParents = new int[planets]; //initializing the planetParents array
+        planetParentDistances = new int[planets]; //initializing the respective distances array
+        for (int i = 0; i < planets; ++i) { //for every planet
+        	planetParents[i] = i; //set every node to be its own parent initially
+        	planetParentDistances[i] = 1; //the distance to yourself would just be one (inclusive)
         }
 
-        // total sum of all edges
-        // each flight-type appears on every planet -> multiplied by N
-        // each portal-type appears on every city  -> multiplied by M
-        long totalSum = sumFlights * (long)N + sumPortals * (long)M;
+        int flightPointer = 0, portalPointer = 0; //setting both flight and pointer nodes to 0 initially
+        long minimumCost = 0; //setting the minimum cost of the final layout as 0 initially
+        int cityComponents = citiesPerPlanet; //every city initially starts as its own component
+        int planetComponents = planets; //every planet initially starts as its own component
 
-        // Prepare sorting order for flight-types and portal-types
-        Integer[] idxF = new Integer[P];
-        for (int i = 0; i < P; ++i) idxF[i] = i;
-        Arrays.sort(idxF, (i1, i2) -> Long.compare(c[i1], c[i2]));
+        while ((flightPointer < flights || portalPointer < portals) && (cityComponents > 1 || planetComponents > 1)) { //while there are still flights or portals to be used and there are flights or portals not connected to the main component 
+            long nextUnusedFlight = (flightPointer < flights) ? flightCosts[flightIndices[flightPointer]] : Long.MAX_VALUE; //getting the next unused flight
+            long nextUnusedPortal = (portalPointer < portals) ? portalCosts[portalIndices[portalPointer]] : Long.MAX_VALUE; //getting the next unused portal
 
-        Integer[] idxP = new Integer[Q];
-        for (int j = 0; j < Q; ++j) idxP[j] = j;
-        Arrays.sort(idxP, (i1, i2) -> Long.compare(z[i1], z[i2]));
-
-        // init DSUs
-        pCity = new int[M];
-        szCity = new int[M];
-        for (int i = 0; i < M; ++i) { pCity[i] = i; szCity[i] = 1; }
-        pPlanet = new int[N];
-        szPlanet = new int[N];
-        for (int i = 0; i < N; ++i) { pPlanet[i] = i; szPlanet[i] = 1; }
-
-        int ptrF = 0, ptrP2 = 0;
-        long mstCost = 0;
-        int cityComp = M;
-        int planetComp = N;
-
-        while ((ptrF < P || ptrP2 < Q) && (cityComp > 1 || planetComp > 1)) {
-            long nextF = (ptrF < P) ? c[idxF[ptrF]] : Long.MAX_VALUE;
-            long nextP = (ptrP2 < Q) ? z[idxP[ptrP2]] : Long.MAX_VALUE;
-
-            if (nextF <= nextP) {
-                int id = idxF[ptrF++];
-                int u = a[id], v = b[id];
-                if (findCity(u) != findCity(v)) {
-                    // merging city components; cost multiplied by current number of planet components
-                    unionCity(u, v);
-                    mstCost += nextF * (long)planetComp;
-                    cityComp--;
+            if (nextUnusedFlight <= nextUnusedPortal) { //if the flight is cheaper than the portal
+                int nextCheapestFlight = flightIndices[flightPointer++]; //getting the next cheapest flight after the pointer
+                int starter = flightStarters[nextCheapestFlight]; //getting the starting node for the flight
+                int ender = flightEnders[nextCheapestFlight]; //getting the ending node for the flight
+                if (findCityParent(starter) != findCityParent(ender)) { //if they both aren't in the same component
+                    cityMerge(starter, ender); //merge the 2 components
+                    minimumCost += nextUnusedFlight * (long)planetComponents; //the cost will increase for every planet not connected
+                    cityComponents--; //decrement the amount of city components accordingly
                 }
-            } else {
-                int id = idxP[ptrP2++];
-                int u = x[id], v = y[id];
-                if (findPlanet(u) != findPlanet(v)) {
-                    // merging planet components; cost multiplied by current number of city components
-                    unionPlanet(u, v);
-                    mstCost += nextP * (long)cityComp;
-                    planetComp--;
+            } else { //if the portal is the cheaper option
+                int nextCheapestPortal = portalIndices[portalPointer++]; //getting the next cheapest portal after the pointer
+                int starter = portalStarters[nextCheapestPortal]; //getting the starting node for the portal
+                int ender = portalEnders[nextCheapestPortal]; //getting the ending node for the portal
+                if (findPlanetParent(starter) != findPlanetParent(ender)) { //if they both aren't in the same component
+                    planetMerge(starter, ender); //merge the 2 components
+                    minimumCost += nextUnusedPortal * (long)cityComponents; //the cost will increase for every city not connected
+                    planetComponents--; //decrement the amount of planet components accordingly
                 }
             }
         }
 
-        long answer = totalSum - mstCost;
-        System.out.println(answer);
+        long amountSaved = totalCost - minimumCost; //calculating the amount of money saved by removing flights and/or portals
+        System.out.println(amountSaved); //print out the result
+        scn.close(); //closing the scanner
     }
 }
