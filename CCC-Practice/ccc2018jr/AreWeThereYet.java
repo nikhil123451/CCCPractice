@@ -4,21 +4,21 @@ public class AreWeThereYet {
 	static Scanner scn = new Scanner(System.in);
 	
 	static final int CITIES = 5;
-	static int[] rcd = new int[CITIES];
+	static int[] relativeCityDistances = new int[CITIES];
 	static int[][] distances = new int[CITIES][CITIES];
 	
 	public static void main(String[] args) {
 		for (int i = 0 ; i < CITIES ; i++) {
 			if (i == 0) {
-				rcd[i] = 0;
+				relativeCityDistances[i] = 0;
 			} else {
-				rcd[i] = scn.nextInt() + rcd[i - 1];
+				relativeCityDistances[i] = scn.nextInt() + relativeCityDistances[i - 1];
 			}
 		}
 		
-		for (int cC = 0 ; cC < CITIES ; cC++) {
+		for (int currentCity = 0 ; currentCity < CITIES ; currentCity++) {
 			for (int j = 0 ; j < CITIES ; j++) {
-				distances[cC][j] = Math.abs(rcd[cC] - rcd[j]);
+				distances[currentCity][j] = Math.abs(relativeCityDistances[currentCity] - relativeCityDistances[j]);
 			}
 		}
 		
