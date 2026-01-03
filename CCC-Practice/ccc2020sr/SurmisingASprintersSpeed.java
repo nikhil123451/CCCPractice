@@ -24,5 +24,6 @@ public class SurmisingASprintersSpeed {
 		}
 		
 		System.out.println(maximumSpeed);
+		scn.close();
 	}
 }
