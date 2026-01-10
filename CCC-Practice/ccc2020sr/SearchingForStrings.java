@@ -24,7 +24,7 @@ public class SearchingForStrings {
 		}
 		
 		System.out.println(uniquePermumations);
-		scn.close();
+		scn.close(); //
 	}
 	
 	public static String[] getPermutations(String needle) { //method to get the amount of permutations of a string
