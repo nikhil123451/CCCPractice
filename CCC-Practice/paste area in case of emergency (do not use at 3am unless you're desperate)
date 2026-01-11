@@ -1,63 +1,101 @@
 import java.util.*;
 
-public class Tourism { //taken from GPT and modified
+public class SwappingSeats { //taken from GPT and modified
 
     static Scanner scn = new Scanner(System.in);
-    static int N, K;
-    static long[] a;
-    static int[] seg;
 
     public static void main(String[] args) {
-        N = scn.nextInt();
-        K = scn.nextInt();
+        String s = scn.next();
+        int n = s.length();
 
-        a = new long[N];
-        for (int i = 0; i < N; i++) {
-            a[i] = scn.nextLong();
+        int[] total = new int[3];
+        for (char c : s.toCharArray()) {
+            total[groupIdx(c)]++;
         }
 
-        seg = new int[4 * N];
-        build(1, 0, N - 1);
+        String doubled = s + s;
 
-        int days = (N + K - 1) / K;
-        long answer = 0;
+        int[][] perms = {
+            {0, 1, 2},
+            {0, 2, 1},
+            {1, 0, 2},
+            {1, 2, 0},
+            {2, 0, 1},
+            {2, 1, 0}
+        };
 
-        int right = N - 1;
+        long answer = Long.MAX_VALUE;
 
-        for (int d = 0; d < days; d++) {
-            int left = Math.max(0, right - K + 1);
-            int idx = query(1, 0, N - 1, left, right);
-            answer += a[idx];
-            right = idx - 1;
+        for (int[] perm : perms) {
+
+            // group -> block mapping
+            int[] groupToBlock = new int[3];
+            for (int i = 0; i < 3; i++) {
+                groupToBlock[perm[i]] = i;
+            }
+
+            int len0 = total[perm[0]];
+            int len1 = total[perm[1]];
+            int len2 = total[perm[2]];
+
+            int[][] cnt = new int[3][3];
+
+            // initial window
+            for (int i = 0; i < len0; i++)
+                cnt[0][groupToBlock[groupIdx(doubled.charAt(i))]]++;
+
+            for (int i = len0; i < len0 + len1; i++)
+                cnt[1][groupToBlock[groupIdx(doubled.charAt(i))]]++;
+
+            for (int i = len0 + len1; i < n; i++)
+                cnt[2][groupToBlock[groupIdx(doubled.charAt(i))]]++;
+
+            for (int start = 0; start < n; start++) {
+
+                if (start > 0) {
+                    slide(cnt, doubled, start - 1, start + len0 - 1, 0, groupToBlock);
+                    slide(cnt, doubled, start + len0 - 1, start + len0 + len1 - 1, 1, groupToBlock);
+                    slide(cnt, doubled, start + len0 + len1 - 1, start + n - 1, 2, groupToBlock);
+                }
+
+                int[][] cur = new int[3][3];
+                for (int i = 0; i < 3; i++)
+                    cur[i] = cnt[i].clone();
+
+                long swaps = 0;
+
+                // direct swaps
+                for (int i = 0; i < 3; i++) {
+                    for (int j = i + 1; j < 3; j++) {
+                        int x = Math.min(cur[i][j], cur[j][i]);
+                        swaps += x;
+                        cur[i][j] -= x;
+                        cur[j][i] -= x;
+                    }
+                }
+
+                // remaining 3-cycles
+                int remaining = 0;
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        if (i != j) remaining += cur[i][j];
+                    }
+                }
+
+                swaps += 2L * (remaining / 3);
+                answer = Math.min(answer, swaps);
+            }
         }
 
         System.out.println(answer);
     }
 
-    static void build(int node, int l, int r) {
-        if (l == r) {
-            seg[node] = l;
-            return;
-        }
-        int mid = (l + r) / 2;
-        build(node * 2, l, mid);
-        build(node * 2 + 1, mid + 1, r);
-
-        int leftIdx = seg[node * 2];
-        int rightIdx = seg[node * 2 + 1];
-        seg[node] = (a[leftIdx] >= a[rightIdx]) ? leftIdx : rightIdx;
+    static void slide(int[][] cnt, String s, int out, int in, int block, int[] map) {
+        cnt[block][map[groupIdx(s.charAt(out))]]--;
+        cnt[block][map[groupIdx(s.charAt(in))]]++;
     }
 
-    static int query(int node, int l, int r, int ql, int qr) {
-        if (qr < l || r < ql) return -1;
-        if (ql <= l && r <= qr) return seg[node];
-
-        int mid = (l + r) / 2;
-        int leftIdx = query(node * 2, l, mid, ql, qr);
-        int rightIdx = query(node * 2 + 1, mid + 1, r, ql, qr);
-
-        if (leftIdx == -1) return rightIdx;
-        if (rightIdx == -1) return leftIdx;
-        return (a[leftIdx] >= a[rightIdx]) ? leftIdx : rightIdx;
+    static int groupIdx(char c) {
+        return c == 'A' ? 0 : (c == 'B' ? 1 : 2);
     }
 }
